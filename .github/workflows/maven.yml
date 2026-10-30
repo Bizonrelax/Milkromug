@@ -1,0 +1,122 @@
+name: Build Portable Windows EXE (Milkromug, Java 21)
+
+# Сборка по требованию (workflow_dispatch), при пуше в main и pull request'ах в main.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # создание/обновление Release и тегов дефолтным GITHUB_TOKEN
+  actions: read     # управление артефактами Actions (варнинг insufficient permissions)
+  checks: write     # публикация результатов проверок
+
+jobs:
+  build:
+    # Windows нужен для сборки портативного EXE через jpackage (app-image).
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21 (Temurin)
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Cache Maven repository (~/.m2/repository)
+      # Явный кэш вместо cache: maven у setup-java — ключ содержит hashFiles('**/pom.xml'),
+      # restore-keys — префикс без хэша (устойчивый partial restore, чинит «Failed to restore cache»).
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Export project version from pom
+      # Формируем тег/имя релиза из версии pom (v${project.version}).
+      shell: bash
+      run: |
+        VER=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive org.codehaus.mojo:exec-maven-plugin:3.5.0:exec 2>/dev/null || true)
+        if [ -z "$VER" ]; then VER=$(awk '/<version>/{gsub(/.*<version>|<\/version>.*/,""); print; exit}' pom.xml); fi
+        echo "PROJECT_VERSION=$VER" >> "$GITHUB_ENV"
+
+    - name: Build with Maven (fat JAR, тесты)
+      run: mvn -B package
+
+    - name: Package portable EXE via jpackage
+      shell: bash
+      # jpackage пишет app-image в короткую папку вне workspace (D:\\_temp\\jpackage-out):
+      # внутри D:\\a\\Milkromug\\Milkromug\\target пути внутренних dll встроенной JRE
+      # превышают лимит Windows MAX_PATH (~260) и jpackage падает с
+      # "Cannot access file with path exceeding 32000 characters".
+      run: |
+        set -o pipefail
+        OUT="$RUNNER_TEMP/jpackage-out"
+        rm -rf "$OUT" && mkdir -p "$OUT"
+        JAR=$(basename target/milkromug-*.jar | grep '\.jar$' | head -n1)
+        echo "Fat JAR: $JAR"
+        # --input: ЧИСТАЯ папка в RUNNER_TEMP, куда положен ТОЛЬКО fat-jar Spring Boot.
+        # Никакого мусора из target (class-файлы, surefire-отчёты, test-classes,
+        # original-*.jar) — иначе всё это попадает в app/ внутри образа.
+        # Все зависимости уже внутри fat-jar (BOOT-INF/lib), отдельный dependency-каталог не нужен.
+        rm -rf "$RUNNER_TEMP/jpackage-input" && mkdir -p "$RUNNER_TEMP/jpackage-input"
+        cp "target/$JAR" "$RUNNER_TEMP/jpackage-input/"
+        # --main-class: JarLauncher — точка входа Spring Boot Loader внутри fat-jar.
+        # Класс приложения (com.bizonrelax.milkromug.MilkromugApplication) как main-class
+        # НЕ работает: в fat-jar его классы лежат в BOOT-INF/classes вне classpath загрузчика.
+        jpackage --type app-image --name Milkromug \
+          --main-jar "$JAR" \
+          --main-class org.springframework.boot.loader.launch.JarLauncher \
+          --input "$RUNNER_TEMP/jpackage-input" \
+          --dest "$OUT"
+
+    - name: Archive portable package
+      shell: bash
+      run: |
+        cd "$RUNNER_TEMP/jpackage-out"
+        7z a -tzip "$GITHUB_WORKSPACE/Milkromug-portable-win64.zip" Milkromug
+
+    - name: Upload portable application package
+      # Артефакт Actions: zip с app-image (Milkromug.exe + встроенная JRE 21 с раннера).
+      uses: actions/upload-artifact@v4
+      with:
+        name: Milkromug-portable-win64
+        path: Milkromug-portable-win64.zip
+        if-no-files-found: error
+
+    - name: Create/Update GitHub Release (только для push в main)
+      # После мерджа в main в репозитории автоматически появляется Release
+      # с portable-архивом (EXE + встроенная JRE 21, Java ставить не нужно).
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      continue-on-error: true   # если не хватает прав на Release — сборка всё равно успешна, артефакт загружен
+      uses: softprops/action-gh-release@v2
+      id: release
+      with:
+        tag_name: v${{ env.PROJECT_VERSION }}
+        name: Milkromug v${{ env.PROJECT_VERSION }}
+        body: "Автоматическая сборка portable-пакета через jpackage (app-image: Milkromug.exe + встроенная JRE 21) для Windows x64. Установка Java не требуется; после запуска интерфейс доступен на http://localhost:8080."
+        files: |
+          Milkromug-portable-win64.zip
+        fail_on_unmatched_files: false
+        overwrite_files: true    # при каждом пуше в main бинарники в Release перезаписываются свежими
+        make_latest: true        # тег latest всегда указывает на последнюю успешную сборку
+
+    - name: Verify release assets (main push only)
+      # Финальная проверка: шаг выше уже создал релиз v<версия>
+      # и загрузил в него Milkromug-portable-win64.zip (overwrite_files, make_latest).
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        TAG="v${PROJECT_VERSION}"
+        gh release view "$TAG"
+        ASSETS=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+        echo "$ASSETS"
+        echo "$ASSETS" | grep -q '^Milkromug-portable-win64\.zip$' || { echo "missing portable zip asset"; exit 1; }

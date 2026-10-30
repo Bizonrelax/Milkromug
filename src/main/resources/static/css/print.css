@@ -6,10 +6,16 @@
     --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
     --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas,
                  "Liberation Mono", monospace;
+    /* Размер шрифта ИНТЕРФЕЙСА (панель, заголовки, подписи, кнопки).
+       10–22 px, шаг 1, по умолчанию 16. Управляется вторым спиннером
+       (#uiFontSpinner, js/ui-font.js) и сохраняется в localStorage.
+       НЕ влияет на печатный чат (там свой спиннер ?font=N, 8–24 pt). */
+    --ui-font-size: 16px;
 }
 
 body {
     font-family: var(--font-body);
+    font-size: var(--ui-font-size); /* базовый размер UI */
     margin: 0;
     color: #1a1a1a;
     background: #f4f2ee;
@@ -35,25 +41,28 @@ body {
 
 .toolbar label {
     font-weight: 600;
+    font-size: var(--ui-font-size);
 }
 
-#fontSpinner {
+#fontSpinner,
+#uiFontSpinner {
     width: 70px;
     padding: 4px 6px;
-    font-size: 1em;
+    font-size: var(--ui-font-size);
     border: 1px solid #b8a97e;
     border-radius: 6px;
 }
 
 .hint {
     color: #7a6c4f;
+    font-size: calc(var(--ui-font-size) * 0.85);
     margin-right: 12px;
 }
 
 #savePdfBtn {
     margin-left: auto;
     padding: 8px 18px;
-    font-size: 1em;
+    font-size: var(--ui-font-size);
     font-weight: 700;
     color: #fff;
     background: #6b4f2a;
@@ -151,11 +160,13 @@ pre code {
    - правильные переносы страниц.
    ============================================================ */
 @media print {
-    /* Скрываем весь интерактив */
+    /* Скрываем весь интерактив: ОБА спиннера (печатный #fontSpinner
+       и интерфейсный #uiFontSpinner) и всю панель управления. */
     .no-print,
     .toolbar,
     #savePdfBtn,
     #fontSpinner,
+    #uiFontSpinner,
     .sample {
         display: none !important;
     }
