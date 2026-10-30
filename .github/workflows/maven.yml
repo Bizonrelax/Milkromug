@@ -70,9 +70,13 @@ jobs:
         # --main-class: JarLauncher — точка входа Spring Boot Loader внутри fat-jar.
         # Класс приложения (com.bizonrelax.milkromug.MilkromugApplication) как main-class
         # НЕ работает: в fat-jar его классы лежат в BOOT-INF/classes вне classpath загрузчика.
+        # --win-console: Milkromug.exe запускается как консольное приложение — при старте
+        # появляется окно с логами Spring Boot (GUI-сборка без окна путает пользователя:
+        # непонятно, запущена ли программа и где смотреть ошибки).
         jpackage --type app-image --name Milkromug \
           --main-jar "$JAR" \
           --main-class org.springframework.boot.loader.launch.JarLauncher \
+          --win-console \
           --input "$RUNNER_TEMP/jpackage-input" \
           --dest "$OUT"
 
