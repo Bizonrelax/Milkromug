@@ -39,6 +39,16 @@ The CI pipeline (GitHub Actions, `windows-latest`) automatically builds a **port
 - After launch, the local UI is available at **http://localhost:8080**.
 - The same zip is also available as the `Milkromug-portable-win64` build artifact in the Actions tab for any run.
 
+## 🖱️ How to use (one-click chat capture)
+1. **Run Milkromug.exe** (double-click the icon) — the local server starts at `http://localhost:8080`.
+2. Open **http://localhost:8080/bookmarklet** and **drag the "Milkromug Capture" button** to your browser's bookmarks bar (or copy the minified one-liner from the textarea into a new bookmark manually).
+3. Open any AI chat (**chat.qwen.ai**, **chatgpt.com**, **gemini.google.com** or most other chat UIs) and **click the bookmark**. The script collects the messages, sends them to the local server and opens a clean preview in a new tab.
+4. In the new tab **tune the font size** with the two spinners (chat text 8–24 pt, UI 10–22 px, `?font=N` URL param works too) and press **"Save to PDF"** (browser print dialog → Save as PDF).
+
+Notes:
+* If the server is not running, the opened tab shows a short instruction — start `Milkromug.exe` and click the bookmark again.
+* `POST /chat` returns JSON `{id, url}` and keeps the last 20 chats in memory; `GET /preview/{id}` renders the saved chat. Legacy HTML mode is still available via `Accept: text/html` or `?legacy=html`.
+
 
 📜 License
 This project is released under The Unlicense. Do whatever you want with it. No copyright, no restrictions.
@@ -86,6 +96,16 @@ CI-конвейер (GitHub Actions, `windows-latest`) автоматическ�
 - Распакуйте архив и запустите `Milkromug\Milkromug.exe`. Внутри — EXE **со встроенной JRE 21**: устанавливать Java **не требуется**.
 - После запуска интерфейс доступен на **http://localhost:8080**.
 - Тот же zip доступен как артефакт сборки `Milkromug-portable-win64` на вкладке Actions для любого прогона.
+
+## 🖱️ Как пользоваться (захват чата одним кликом)
+1. **Запустите Milkromug.exe** (двойной клик по иконке) — локальный сервер поднимется на `http://localhost:8080`.
+2. Откройте **http://localhost:8080/bookmarklet** и **перетащите кнопку «Milkromug Capture»** на панель закладок браузера (или скопируйте минифицированный однострочник из textarea в новую закладку вручную).
+3. Откройте чат с ИИ (**chat.qwen.ai**, **chatgpt.com**, **gemini.google.com** или большинство других интерфейсов) и **кликните по закладке**. Скрипт соберёт сообщения, отправит их на локальный сервер и откроет чистый предпросмотр в новой вкладке.
+4. В новой вкладке **настройте шрифт** двумя спиннерами (текст чата 8–24 pt, интерфейс 10–22 px, параметр URL `?font=N` тоже работает) и нажмите **«Сохранить в PDF»** (диалог печати браузера → Сохранить как PDF).
+
+Примечания:
+* Если сервер не запущен, в открытой вкладке появится короткая инструкция — запустите `Milkromug.exe` и кликните закладку снова.
+* `POST /chat` возвращает JSON `{id, url}` и хранит в памяти последние 20 чатов; `GET /preview/{id}` рендерит сохранённый чат. Прежний HTML-режим доступен через заголовок `Accept: text/html` или параметр `?legacy=html`.
 
 📜 Лицензия
 Проект выпущен под The Unlicense. Делайте с кодом всё, что захотите. Никаких копирайтов и ограничений.

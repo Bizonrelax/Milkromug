@@ -2,13 +2,14 @@ package com.bizonrelax.milkromug.controller;
 
 import com.bizonrelax.milkromug.model.ChatRequest;
 import com.bizonrelax.milkromug.service.ChatStore;
-import jakarta.servlet.http.HttpServletRequest;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Контроллер чата:
@@ -63,14 +63,15 @@ public class ChatController {
      * Старое поведение (HTML-предпросмотр) сохраняется для запросов с
      * Accept: text/html или параметром ?legacy=html.
      */
-    @PostMapping(value = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE,
+                 produces = {MediaType.TEXT_HTML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public Object renderChat(@RequestBody ChatRequest request,
                              @RequestParam(name = "font", defaultValue = "12") int fontSize,
                              @RequestParam(name = "legacy", required = false) String legacy,
-                             HttpHeaders headers,
-                             Model model) {
+                             @RequestHeader(name = HttpHeaders.ACCEPT, required = false) String acceptHeader,
+                             Model model) throws Exception {
 
-        boolean wantsHtml = "html".equalsIgnoreCase(legacy) || acceptsHtml(headers);
+        boolean wantsHtml = "html".equalsIgnoreCase(legacy) || acceptsHtml(acceptHeader);
 
         if (wantsHtml) {
             // Прежний режим: ничего не сохраняем, сразу рендерим шаблон.
@@ -84,19 +85,23 @@ public class ChatController {
         ChatRequest sanitized = sanitize(request);
         String title = resolveTitle(sanitized);
         String id = chatStore.save(title, sanitized);
-        return Map.of(
-                "id", id,
-                "url", "http://localhost:8080/preview/" + id
-        );
+        // Возвращаем готовую JSON-строку: контроллер смешивает HTML-шаблоны и JSON,
+        // поэтому сериализуем явно (Jackson в classpath).
+        return org.springframework.http.ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new com.fasterxml.jackson.databind.ObjectMapper()
+                        .writeValueAsString(new ChatResponse(id, "http://localhost:8080/preview/" + id)));
     }
 
-    /** Печатный предпросмотр ранее сохранённого чата; нет id — дружелюбная 404. */
+    /** Печатный предпросмотр ранее сохранённого чата; нет id — дружелюбная страница 404. */
     @GetMapping("/preview/{id}")
     public String preview(@PathVariable("id") String id,
                           @RequestParam(name = "font", defaultValue = "12") int fontSize,
-                          Model model) {
+                          Model model,
+                          jakarta.servlet.http.HttpServletResponse response) {
         var found = chatStore.find(id);
         if (found.isEmpty()) {
+            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND);
             model.addAttribute("missingId", id);
             model.addAttribute("fontSize", clampFont(fontSize));
             return "chat-not-found";
@@ -162,14 +167,24 @@ public class ChatController {
         return rendered;
     }
 
-    /** Запрос хочет HTML-ответ? (браузерная форма / классический curl) */
-    private static boolean acceptsHtml(HttpHeaders headers) {
-        List<MediaType> accepted = headers.getAccept();
-        if (accepted == null || accepted.isEmpty()) {
+    /**
+     * Запрос хочет HTML-ответ? (браузерная форма / классический curl).
+     * Нет заголовка Accept — считаем запрос браузерным (старое поведение);
+     * text/html или wildcard — HTML; application/json — JSON.
+     */
+    private static boolean acceptsHtml(String acceptHeader) {
+        if (acceptHeader == null || acceptHeader.isBlank()) {
             return true; // без Accept — считаем браузерным запросом (старое поведение)
         }
+        List<MediaType> accepted;
+        try {
+            accepted = MediaType.parseMediaTypes(acceptHeader);
+        } catch (RuntimeException e) {
+            return false;
+        }
+        MediaType.sortBySpecificityAndQuality(accepted);
         for (MediaType mt : accepted) {
-            if (mt.includes(MediaType.TEXT_HTML) || mt.equals(MediaType.ALL)) {
+            if (mt.includes(MediaType.TEXT_HTML)) {
                 return true;
             }
             if (mt.includes(MediaType.APPLICATION_JSON)) {
@@ -177,6 +192,10 @@ public class ChatController {
             }
         }
         return false;
+    }
+
+    /** Ответ нового режима POST /chat: id сохранённого чата и ссылка на предпросмотр. */
+    public record ChatResponse(String id, String url) {
     }
 
     /** Простой DTO для передачи отфильтрованного сообщения в Thymeleaf. */

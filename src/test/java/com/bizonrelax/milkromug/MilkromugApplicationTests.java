@@ -100,7 +100,7 @@ class MilkromugApplicationTests {
     @Test
     void previewUnknownIdReturnsFriendlyNotFound() throws Exception {
         mockMvc.perform(get("/preview/no-such-id"))
-                .andExpect(status().isOk())
+                .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("не найден")));
     }
 
@@ -164,7 +164,9 @@ class MilkromugApplicationTests {
         String href = BookmarkletSource.buildBookmarkletHref();
         assertThat(href).startsWith("javascript:");
         assertThat(href).contains("window.open");
-        assertThat(href).contains("localhost:8080/chat");
+        // адрес сервера задаётся один раз в константе SERVER, запрос — через SERVER + '/chat'
+        assertThat(href).contains("http://localhost:8080");
+        assertThat(href).contains("/chat");
         assertThat(href).doesNotContain("%SERVER_URL%");
         assertThat(href).doesNotContain("\n");
         // Селекторы известных сайтов присутствуют
