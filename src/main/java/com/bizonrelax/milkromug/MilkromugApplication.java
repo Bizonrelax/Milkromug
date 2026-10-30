@@ -11,6 +11,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class MilkromugApplication {
 
     public static void main(String[] args) {
+        // Если порт уже занят (второй экземпляр), печатаем понятную подсказку
+        // и выходим с кодом 0 — до старта Spring Boot и без stacktrace.
+        PortGuard.ensurePortAvailable(PortGuard.resolvePort(args));
         SpringApplication.run(MilkromugApplication.class, args);
     }
 }

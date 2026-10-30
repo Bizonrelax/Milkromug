@@ -39,14 +39,25 @@ The CI pipeline (GitHub Actions, `windows-latest`) automatically builds a **port
 - After launch, the local UI is available at **http://localhost:8080**.
 - The same zip is also available as the `Milkromug-portable-win64` build artifact in the Actions tab for any run.
 
-## 🖱️ How to use (one-click chat capture)
-1. **Run Milkromug.exe** (double-click the icon) — the local server starts at `http://localhost:8080`.
-2. Open **http://localhost:8080/bookmarklet** and **drag the "Milkromug Capture" button** to your browser's bookmarks bar (or copy the minified one-liner from the textarea into a new bookmark manually).
-3. Open any AI chat (**chat.qwen.ai**, **chatgpt.com**, **gemini.google.com** or most other chat UIs) and **click the bookmark**. The script collects the messages, sends them to the local server and opens a clean preview in a new tab.
-4. In the new tab **tune the font size** with the two spinners (chat text 8–24 pt, UI 10–22 px, `?font=N` URL param works too) and press **"Save to PDF"** (browser print dialog → Save as PDF).
+## 🖱️ How to use (full user manual)
+
+**1. Launch.** Double-click `Milkromug\Milkromug.exe`. A **console window with Spring Boot logs** opens — this is normal, keep it open while you work; the program runs inside it. **No administrator rights are required** (the portable package just needs a writable folder to unpack into).
+
+**2. Install the bookmarklet.** Open **http://localhost:8080** and go to **http://localhost:8080/bookmarklet**, then **drag the "Milkromug Capture" button onto your browser's bookmarks bar** (or copy the minified one-liner from the textarea into a new bookmark manually). Do this once — the bookmark stays in the browser forever.
+
+**3. Capture a chat.** Open any AI chat (**chat.qwen.ai**, **chatgpt.com**, **gemini.google.com** or most other chat UIs) and **click the Milkromug bookmark**. The script collects the messages, sends them to the local server and a **clean preview opens in a new browser tab**.
+
+**4. Save to PDF.** In the preview tab **tune the font size** with the two spinners (chat text 8–24 pt, UI 10–22 px, the `?font=N` URL param works too) and press **"Save to PDF"** (browser print dialog → Save as PDF).
+
+**5. Stop the program.** Simply **close the console window**, or run `taskkill /IM Milkromug.exe /F` in a terminal. Milkromug does not depend on the browser: closing tabs or the browser does **not** stop it — only closing the console window (or taskkill) does.
+
+**6. Update.** Download the new `Milkromug-portable-win64.zip` from [Releases](https://github.com/Bizonrelax/Milkromug/releases), **first stop the old process** (close its console window or `taskkill /IM Milkromug.exe /F`), then unpack the archive over the old folder and launch `Milkromug.exe`. If you skip the stop step, the still-running old process keeps holding port 8080 and the new instance will just print "Milkromug is already running…" and exit.
+
+**7. Java is not required.** The JRE 21 is bundled inside the package — nothing else has to be installed.
 
 Notes:
 * If the server is not running, the opened tab shows a short instruction — start `Milkromug.exe` and click the bookmark again.
+* Starting a second copy of `Milkromug.exe` is safe: it detects that port 8080 is busy, prints a friendly hint (in Russian on RU systems, in English otherwise) and exits without errors.
 * `POST /chat` returns JSON `{id, url}` and keeps the last 20 chats in memory; `GET /preview/{id}` renders the saved chat. Legacy HTML mode is still available via `Accept: text/html` or `?legacy=html`.
 
 
@@ -97,14 +108,25 @@ CI-конвейер (GitHub Actions, `windows-latest`) автоматическ�
 - После запуска интерфейс доступен на **http://localhost:8080**.
 - Тот же zip доступен как артефакт сборки `Milkromug-portable-win64` на вкладке Actions для любого прогона.
 
-## 🖱️ Как пользоваться (захват чата одним кликом)
-1. **Запустите Milkromug.exe** (двойной клик по иконке) — локальный сервер поднимется на `http://localhost:8080`.
-2. Откройте **http://localhost:8080/bookmarklet** и **перетащите кнопку «Milkromug Capture»** на панель закладок браузера (или скопируйте минифицированный однострочник из textarea в новую закладку вручную).
-3. Откройте чат с ИИ (**chat.qwen.ai**, **chatgpt.com**, **gemini.google.com** или большинство других интерфейсов) и **кликните по закладке**. Скрипт соберёт сообщения, отправит их на локальный сервер и откроет чистый предпросмотр в новой вкладке.
-4. В новой вкладке **настройте шрифт** двумя спиннерами (текст чата 8–24 pt, интерфейс 10–22 px, параметр URL `?font=N` тоже работает) и нажмите **«Сохранить в PDF»** (диалог печати браузера → Сохранить как PDF).
+## 🖱️ Как пользоваться (полное руководство пользователя)
+
+**1. Запуск.** Дважды кликните `Milkromug\Milkromug.exe`. Откроется **консольное окно с логами Spring Boot** — это нормально, держите его открытым во время работы: программа живёт именно в этом окне. **Права администратора НЕ нужны** (портативному пакету нужна только доступная для записи папка, куда вы его распаковали).
+
+**2. Установите букмарклет.** Откройте **http://localhost:8080**, затем страницу **http://localhost:8080/bookmarklet** и **перетащите кнопку «Milkromug Capture» на панель закладок браузера** (или скопируйте минифицированный однострочник из textarea в новую закладку вручную). Делается один раз — закладка остаётся в браузере навсегда.
+
+**3. Захват чата.** Откройте чат с ИИ (**chat.qwen.ai**, **chatgpt.com**, **gemini.google.com** или большинство других интерфейсов) и **кликните по закладке Milkromug**. Скрипт соберёт сообщения, отправит их на локальный сервер, и в **новой вкладке откроется чистый предпросмотр**.
+
+**4. Сохранение в PDF.** В новой вкладке **настройте шрифт** двумя спиннерами (текст чата 8–24 pt, интерфейс 10–22 px, параметр URL `?font=N` тоже работает) и нажмите **«Сохранить в PDF»** (диалог печати браузера → Сохранить как PDF).
+
+**5. Как остановить программу.** Просто **закройте консольное окно** или выполните в терминале `taskkill /IM Milkromug.exe /F`. Milkromug не зависит от браузера: закрытие вкладок или браузера его **не останавливает** — только закрытие консольного окна (или taskkill).
+
+**6. Как обновить.** Скачайте новый `Milkromug-portable-win64.zip` из [Releases](https://github.com/Bizonrelax/Milkromug/releases), **СНАЧАЛА остановите старый процесс** (закройте его консольное окно или `taskkill /IM Milkromug.exe /F`), затем распакуйте архив поверх старой папки и запустите `Milkromug.exe`. Если пропустить остановку, старый процесс продолжит держать порт 8080, и новый экземпляр просто напишет «Milkromug уже запущен…» и завершится.
+
+**7. Java не требуется.** JRE 21 встроена в пакет — ничего дополнительно устанавливать не нужно.
 
 Примечания:
 * Если сервер не запущен, в открытой вкладке появится короткая инструкция — запустите `Milkromug.exe` и кликните закладку снова.
+* Повторный запуск `Milkromug.exe` безопасен: программа определит, что порт 8080 занят, напечатает понятную подсказку (на русском для русской локали, на английском для остальных) и выйдет без ошибок.
 * `POST /chat` возвращает JSON `{id, url}` и хранит в памяти последние 20 чатов; `GET /preview/{id}` рендерит сохранённый чат. Прежний HTML-режим доступен через заголовок `Accept: text/html` или параметр `?legacy=html`.
 
 📜 Лицензия
