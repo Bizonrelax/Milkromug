@@ -30,9 +30,27 @@
 </header>
 
 <main id="chatPreview">
+    <!-- Крупный блок «Как пользоваться» — захват чата одним кликом -->
+    <section class="howto no-print" style="max-width:720px;margin:24px auto;font-size:16px;line-height:1.6">
+        <h2 style="margin-bottom:12px">☕ Как пользоваться</h2>
+        <ol style="padding-left:24px">
+            <li style="margin-bottom:10px"><b>Запусти Milkromug.exe</b> — локальный сервер поднимется на
+                <code>http://localhost:8080</code>.</li>
+            <li style="margin-bottom:10px"><b>Открой <a href="/bookmarklet">http://localhost:8080</a>
+                    (страница «Milkromug Capture»)</b>
+                и перетащи кнопку <b>«Milkromug Capture»</b> на панель закладок браузера.</li>
+            <li style="margin-bottom:10px"><b>Открой чат с ИИ</b> (chat.qwen.ai, chatgpt.com, gemini.google.com…)
+                и <b>кликни по закладке</b> — чат будет отправлен в Milkromug.</li>
+            <li><b>В новой вкладке</b> настрой размер шрифта спиннерами и нажми
+                <b>«Сохранить в PDF»</b> (печать → сохранить как PDF).</li>
+        </ol>
+    </section>
+
     <p class="placeholder">
         Отправьте JSON с чатом на <code>POST /chat</code>
         (например, через <code>curl</code>) — и здесь появится печатная версия диалога.
+        Захваченные букмарклетом чаты сохраняются в памяти (до 20) и открываются
+        по ссылке <code>/preview/{id}</code>.
     </p>
     <pre class="sample no-print"><code>curl -X POST http://localhost:8080/chat \
   -H "Content-Type: application/json" \
