@@ -31,6 +31,14 @@ mvn clean install
 java -jar target/milkromug-1.0.jar
 ```
 
+## 📥 Releases / Installation
+The CI pipeline (GitHub Actions, `windows-latest`) automatically builds a **portable Windows package** on every push to `main` and publishes it as a **GitHub Release**.
+
+- Download the latest `Milkromug-portable-win64.zip` from the [Releases](https://github.com/Bizonrelax/Milkromug/releases) page (or the `latest` tag).
+- Unpack it and run `Milkromug\Milkromug.exe`. The archive contains the EXE **with a bundled JRE 21** — installing Java is **not required**.
+- After launch, the local UI is available at **http://localhost:8080**.
+- The same zip is also available as the `Milkromug-portable-win64` build artifact in the Actions tab for any run.
+
 
 📜 License
 This project is released under The Unlicense. Do whatever you want with it. No copyright, no restrictions.
@@ -70,6 +78,15 @@ This project is released under The Unlicense. Do whatever you want with it. No c
 mvn clean install
 java -jar target/milkromug-1.0.jar
 ```
+
+## 📥 Релизы / Установка
+CI-конвейер (GitHub Actions, `windows-latest`) автоматически собирает **портативный пакет для Windows** при каждом пуше в `main` и публикует его как **GitHub Release**.
+
+- Скачайте свежий `Milkromug-portable-win64.zip` из раздела [Releases](https://github.com/Bizonrelax/Milkromug/releases) (или тега `latest`).
+- Распакуйте архив и запустите `Milkromug\Milkromug.exe`. Внутри — EXE **со встроенной JRE 21**: устанавливать Java **не требуется**.
+- После запуска интерфейс доступен на **http://localhost:8080**.
+- Тот же zip доступен как артефакт сборки `Milkromug-portable-win64` на вкладке Actions для любого прогона.
+
 📜 Лицензия
 Проект выпущен под The Unlicense. Делайте с кодом всё, что захотите. Никаких копирайтов и ограничений.
 
