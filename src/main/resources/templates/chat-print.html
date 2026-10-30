@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Milkromug — печать чата</title>
+    <link rel="stylesheet" th:href="@{/css/print.css}" href="/css/print.css"/>
+</head>
+<body>
+
+<!-- Панель управления: скрыта при печати (media="print" в CSS) -->
+<header class="toolbar no-print">
+    <h1 class="brand">☕ Milkromug</h1>
+
+    <!-- Спиннер выбора размера шрифта: 8..24 pt -->
+    <label for="fontSpinner">Размер шрифта:</label>
+    <input type="number" id="fontSpinner" name="fontSpinner"
+           min="8" max="24" step="1"
+           th:value="${fontSize}" value="12"/>
+    <span class="hint">pt (8–24)</span>
+
+    <button type="button" id="savePdfBtn" onclick="window.print()">
+        💾 Сохранить в PDF
+    </button>
+</header>
+
+<!-- Печатная область -->
+<main id="chatPreview" th:style="'font-size:' + ${fontSize} + 'pt;'">
+    <h2 class="chat-title" th:text="${title}">Название диалога</h2>
+
+    <section class="message" th:each="msg : ${messages}"
+             th:classappend="${msg.author == 'user'} ? 'message-user' : 'message-assistant'">
+        <h3 class="author" th:text="${msg.author}">author</h3>
+        <!-- Отфильтрованный HTML сообщения (jsoup Safelist) -->
+        <div class="content" th:utext="${msg.html}">text</div>
+    </section>
+
+    <p th:if="${#lists.isEmpty(messages)}" class="placeholder">Сообщений нет.</p>
+</main>
+
+<script>
+    // Мгновенно применяем выбранный размер шрифта к области предпросмотра
+    const spinner = document.getElementById('fontSpinner');
+    const preview = document.getElementById('chatPreview');
+
+    function applyFont() {
+        let v = parseInt(spinner.value, 10);
+        if (isNaN(v)) v = 12;
+        v = Math.max(8, Math.min(24, v));
+        preview.style.fontSize = v + 'pt';
+    }
+
+    spinner.addEventListener('input', applyFont);
+    applyFont();
+</script>
+</body>
+</html>
