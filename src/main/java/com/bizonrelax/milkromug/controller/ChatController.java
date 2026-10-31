@@ -3,6 +3,7 @@ package com.bizonrelax.milkromug.controller;
 import com.bizonrelax.milkromug.model.ChatRequest;
 import com.bizonrelax.milkromug.service.ChatStore;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -126,6 +127,19 @@ public class ChatController {
         return "bookmarklet";
     }
 
+    /**
+     * Запускает html через jsoup и вырезает служебные узлы (стили, скрипты, мета)
+     * ДО санитизации: иначе их содержимое превращается в видимый текст документа.
+     */
+    static String stripServiceNodes(String html) {
+        if (html == null || html.isBlank()) {
+            return "";
+        }
+        Document doc = Jsoup.parse(html);
+        doc.select("style, script, noscript, svg, link, meta").remove();
+        return doc.body().html();
+    }
+
     /** Прогоняем все сообщения через jsoup-санитайзинг / экранирование. */
     private static ChatRequest sanitize(ChatRequest request) {
         ChatRequest copy = new ChatRequest();
@@ -137,7 +151,7 @@ public class ChatController {
                 clean.setAuthor(msg.getAuthor());
                 String text = msg.getText() == null ? "" : msg.getText();
                 if (msg.isHtml()) {
-                    clean.setText(Jsoup.clean(text, CHAT_SAFELIST));
+                    clean.setText(Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST));
                     clean.setHtml(true);
                 } else {
                     clean.setText(text);
@@ -164,7 +178,7 @@ public class ChatController {
                 String author = msg.getAuthor() == null ? "?" : msg.getAuthor();
                 String text = msg.getText() == null ? "" : msg.getText();
                 String safeHtml = msg.isHtml()
-                        ? Jsoup.clean(text, CHAT_SAFELIST)
+                        ? Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST)
                         : escapePlainText(text);
                 rendered.add(new RenderedMessage(author, safeHtml, msg.isHtml()));
             }
