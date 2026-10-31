@@ -118,9 +118,9 @@
     return idx % 2 === 0 ? 'user' : 'assistant';
   }
   /* ---- сбор сообщений ---- */
-  /* Микро-фикс C: перед снятием innerHTML/innerText вырезаем служебные узлы
-     style, script из клона узла сообщения — иначе их содержимое попадает
-     в экспорт как видимый текст. */
+  // Микро-фикс C: перед снятием innerHTML/innerText вырезаем служебные узлы
+  // style, script из клона узла сообщения — иначе их содержимое попадает
+  // в экспорт как видимый текст.
   function stripServiceNodes(node) {
     var clone = node.cloneNode(true);
     var junk = clone.querySelectorAll('style, script');
