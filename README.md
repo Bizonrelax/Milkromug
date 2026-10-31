@@ -61,6 +61,22 @@ Notes:
 * `POST /chat` returns JSON `{id, url}` and keeps the last 20 chats in memory; `GET /preview/{id}` renders the saved chat. Legacy HTML mode is still available via `Accept: text/html` or `?legacy=html`.
 
 
+## 🙏 Credits
+The credits table mirrors the `/about` page of the application:
+
+| Project | Version | License |
+|---|---|---|
+| [Spring Boot](https://spring.io/projects/spring-boot) | 3.3.5 | Apache License 2.0 |
+| [Thymeleaf](https://www.thymeleaf.org) | 3.1.2.RELEASE | Apache License 2.0 |
+| [jsoup](https://jsoup.org) | 1.18.1 | MIT License |
+| [Jackson](https://github.com/FasterXML/jackson) | 2.17.2 | Apache License 2.0 |
+| [openhtmltopdf](https://openhtmltopdf.com) | 1.0.10 | LGPL v2.1 / Apache License 2.0 |
+| [Eclipse Temurin JDK](https://adoptium.net) | 21 | Eclipse Public License 2.0 |
+| [Apache Maven](https://maven.apache.org) | 3.9+ | Apache License 2.0 |
+| [jpackage (OpenJDK)](https://openjdk.org) | 21 | GPLv2 + Classpath Exception |
+
+Developed with the help of AI assistants **Qwen** and **Qwen Coder**.
+
 📜 License
 This project is released under The Unlicense. Do whatever you want with it. No copyright, no restrictions.
 
@@ -128,6 +144,22 @@ CI-конвейер (GitHub Actions, `windows-latest`) автоматическ�
 * Если сервер не запущен, в открытой вкладке появится короткая инструкция — запустите `Milkromug.exe` и кликните закладку снова.
 * Повторный запуск `Milkromug.exe` безопасен: программа определит, что порт 8080 занят, напечатает понятную подсказку (на русском для русской локали, на английском для остальных) и выйдет без ошибок.
 * `POST /chat` возвращает JSON `{id, url}` и хранит в памяти последние 20 чатов; `GET /preview/{id}` рендерит сохранённый чат. Прежний HTML-режим доступен через заголовок `Accept: text/html` или параметр `?legacy=html`.
+
+## 🙏 Кредиты
+Таблица кредитов зеркальна таблице со страницы `/about` приложения:
+
+| Проект | Версия | Лицензия |
+|---|---|---|
+| [Spring Boot](https://spring.io/projects/spring-boot) | 3.3.5 | Apache License 2.0 |
+| [Thymeleaf](https://www.thymeleaf.org) | 3.1.2.RELEASE | Apache License 2.0 |
+| [jsoup](https://jsoup.org) | 1.18.1 | MIT License |
+| [Jackson](https://github.com/FasterXML/jackson) | 2.17.2 | Apache License 2.0 |
+| [openhtmltopdf](https://openhtmltopdf.com) | 1.0.10 | LGPL v2.1 / Apache License 2.0 |
+| [Eclipse Temurin JDK](https://adoptium.net) | 21 | Eclipse Public License 2.0 |
+| [Apache Maven](https://maven.apache.org) | 3.9+ | Apache License 2.0 |
+| [jpackage (OpenJDK)](https://openjdk.org) | 21 | GPLv2 + Classpath Exception |
+
+Разработано с помощью ИИ-ассистентов **Qwen** и **Qwen Coder**.
 
 📜 Лицензия
 Проект выпущен под The Unlicense. Делайте с кодом всё, что захотите. Никаких копирайтов и ограничений.
