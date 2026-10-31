@@ -1,0 +1,15 @@
+{
+  "title": "Грязный чат с CSS и markdown",
+  "messages": [
+    {
+      "author": "assistant",
+      "html": true,
+      "text": "<style>.x{color:red}@media screen{.y{left:1px}}</style><div class=\"message\"><p>Обычный текст сообщения со служебным стилем.</p></div>"
+    },
+    {
+      "author": "user",
+      "html": false,
+      "text": "# Заголовок\n**жирное**\n- пункт"
+    }
+  ]
+}

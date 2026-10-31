@@ -3,6 +3,7 @@ package com.bizonrelax.milkromug.controller;
 import com.bizonrelax.milkromug.model.ChatRequest;
 import com.bizonrelax.milkromug.service.ChatStore;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -126,6 +127,19 @@ public class ChatController {
         return "bookmarklet";
     }
 
+    /**
+     * Запускает html через jsoup и вырезает служебные узлы (стили, скрипты, мета)
+     * ДО санитизации: иначе их содержимое превращается в видимый текст документа.
+     */
+    static String stripServiceNodes(String html) {
+        if (html == null || html.isBlank()) {
+            return "";
+        }
+        Document doc = Jsoup.parse(html);
+        doc.select("style, script, noscript, svg, link, meta").remove();
+        return doc.body().html();
+    }
+
     /** Прогоняем все сообщения через jsoup-санитайзинг / экранирование. */
     private static ChatRequest sanitize(ChatRequest request) {
         ChatRequest copy = new ChatRequest();
@@ -137,7 +151,9 @@ public class ChatController {
                 clean.setAuthor(msg.getAuthor());
                 String text = msg.getText() == null ? "" : msg.getText();
                 if (msg.isHtml()) {
-                    clean.setText(Jsoup.clean(text, CHAT_SAFELIST));
+                    String sanitized = Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST);
+                    // Микро-фикс B: html без блочных тегов — на самом деле markdown.
+                    clean.setText(renderMarkdownIfPlain(sanitized, text));
                     clean.setHtml(true);
                 } else {
                     clean.setText(text);
@@ -163,13 +179,64 @@ public class ChatController {
             for (ChatRequest.Message msg : request.getMessages()) {
                 String author = msg.getAuthor() == null ? "?" : msg.getAuthor();
                 String text = msg.getText() == null ? "" : msg.getText();
-                String safeHtml = msg.isHtml()
-                        ? Jsoup.clean(text, CHAT_SAFELIST)
-                        : escapePlainText(text);
-                rendered.add(new RenderedMessage(author, safeHtml, msg.isHtml()));
+                String safeHtml;
+                boolean rawHtml;
+                if (msg.isHtml()) {
+                    safeHtml = Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST);
+                    // Микро-фикс B: html без блочных тегов — на самом деле markdown.
+                    safeHtml = renderMarkdownIfPlain(safeHtml, text);
+                    rawHtml = true;
+                } else {
+                    // plain-text: рендерим markdown через commonmark (серверный рендер).
+                    String md = renderMarkdownIfPlain("", text);
+                    if (md.isBlank()) {
+                        safeHtml = escapePlainText(text);
+                        rawHtml = false;
+                    } else {
+                        safeHtml = md;
+                        rawHtml = true;
+                    }
+                }
+                rendered.add(new RenderedMessage(author, safeHtml, rawHtml));
             }
         }
         return rendered;
+    }
+
+    /**
+     * Блочные теги, наличие которых в уже отсанитизированном html означает,
+     * что сообщение — настоящий HTML, а не plain-text с markdown.
+     */
+    private static final java.util.Set<String> BLOCK_TAGS = java.util.Set.of(
+            "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "ul", "ol", "table", "blockquote");
+
+    /**
+     * Микро-фикс B: если у санитизированного html нет блочных тегов — считаем
+     * текст сообщения markdown и рендерим его через commonmark, результат
+     * дополнительно санитизируем тем же safelist. Пустой sanitizedHtml означает
+     * «plain-text сообщение»: markdown рендерится всегда.
+     */
+    static String renderMarkdownIfPlain(String sanitizedHtml, String text) {
+        if (sanitizedHtml == null || sanitizedHtml.isBlank()) {
+            org.commonmark.parser.Parser parser = org.commonmark.parser.Parser.builder().build();
+            org.commonmark.renderer.html.HtmlRenderer renderer =
+                    org.commonmark.renderer.html.HtmlRenderer.builder().build();
+            String mdHtml = renderer.render(parser.parse(text == null ? "" : text));
+            return Jsoup.clean(mdHtml, CHAT_SAFELIST);
+        }
+        Document parsed = Jsoup.parseBodyFragment(sanitizedHtml);
+        boolean hasBlock = !parsed.body().getAllElements().stream()
+                .filter(el -> BLOCK_TAGS.contains(el.tagName()))
+                .findAny()
+                .isPresent();
+        if (hasBlock) {
+            return sanitizedHtml;
+        }
+        org.commonmark.parser.Parser parser = org.commonmark.parser.Parser.builder().build();
+        org.commonmark.renderer.html.HtmlRenderer renderer =
+                org.commonmark.renderer.html.HtmlRenderer.builder().build();
+        String mdHtml = renderer.render(parser.parse(text == null ? "" : text));
+        return Jsoup.clean(mdHtml, CHAT_SAFELIST);
     }
 
     /**

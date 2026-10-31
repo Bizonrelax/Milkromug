@@ -118,9 +118,20 @@
     return idx % 2 === 0 ? 'user' : 'assistant';
   }
   /* ---- сбор сообщений ---- */
+  /* Микро-фикс C: перед снятием innerHTML/innerText вырезаем служебные узлы
+     style, script из клона узла сообщения — иначе их содержимое попадает
+     в экспорт как видимый текст. */
+  function stripServiceNodes(node) {
+    var clone = node.cloneNode(true);
+    var junk = clone.querySelectorAll('style, script');
+    for (var j = junk.length - 1; j >= 0; j--) {
+      junk[j].parentNode.removeChild(junk[j]);
+    }
+    return clone;
+  }
   var messages = [];
   for (var m = 0; m < nodes.length; m++) {
-    var node = nodes[m];
+    var node = stripServiceNodes(nodes[m]);
     var text = node.innerText || '';
     if (!text.trim()) continue;
     messages.push({ author: roleOf(node, messages.length), text: text, html: false });
