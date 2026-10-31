@@ -63,13 +63,18 @@ public class ChatController {
      * Старое поведение (HTML-предпросмотр) сохраняется для запросов с
      * Accept: text/html или параметром ?legacy=html.
      */
-    @PostMapping(value = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE,
+    @PostMapping(value = "/chat",
+                 consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE},
                  produces = {MediaType.TEXT_HTML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public Object renderChat(@RequestBody ChatRequest request,
+    public Object renderChat(@RequestBody String rawBody,
                              @RequestParam(name = "font", defaultValue = "12") int fontSize,
                              @RequestParam(name = "legacy", required = false) String legacy,
                              @RequestHeader(name = HttpHeaders.ACCEPT, required = false) String acceptHeader,
                              Model model) throws Exception {
+
+        // Тело всегда JSON, но Content-Type у клиентов бывает text/plain — парсим явно.
+        ChatRequest request = new com.fasterxml.jackson.databind.ObjectMapper()
+                .readValue(rawBody, ChatRequest.class);
 
         boolean wantsHtml = "html".equalsIgnoreCase(legacy) || acceptsHtml(acceptHeader);
 
@@ -169,8 +174,10 @@ public class ChatController {
 
     /**
      * Запрос хочет HTML-ответ? (браузерная форма / классический curl).
-     * Нет заголовка Accept — считаем запрос браузерным (старое поведение);
-     * text/html или wildcard — HTML; application/json — JSON.
+     * Legacy-режим включается ТОЛЬКО явно: пустой/отсутствующий Accept
+     * (классический curl из старых инструкций) или явное упоминание text/html.
+     * Wildcard (*&#47;*, telco/* и т.п.) явным не считается и сам по себе
+     * в HTML-режим не отправляет.
      */
     private static boolean acceptsHtml(String acceptHeader) {
         if (acceptHeader == null || acceptHeader.isBlank()) {
@@ -184,6 +191,9 @@ public class ChatController {
         }
         MediaType.sortBySpecificityAndQuality(accepted);
         for (MediaType mt : accepted) {
+            if (mt.isWildcardType() || mt.isWildcardSubtype()) {
+                continue; // wildcard — неявный запрос, не legacy
+            }
             if (mt.includes(MediaType.TEXT_HTML)) {
                 return true;
             }
