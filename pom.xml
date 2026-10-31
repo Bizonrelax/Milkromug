@@ -54,7 +54,7 @@
         <dependency>
             <groupId>org.commonmark</groupId>
             <artifactId>commonmark</artifactId>
-            <version>0.31.2</version>
+            <version>0.31.0</version>
         </dependency>
 
         <!-- Работа с JSON -->
