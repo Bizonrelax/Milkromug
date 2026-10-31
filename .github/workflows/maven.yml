@@ -28,6 +28,13 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
+    - name: Set up Node.js 20 (для синтакс-теста букмарклета)
+      # BookmarkletSyntaxTest помечен @EnabledIfEnvironmentVariable(NODE_AVAILABLE=1):
+      # без Node на раннере тест скипается и проверка синтаксиса живёт вне CI.
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
     - name: Cache Maven repository (~/.m2/repository)
       # Явный кэш вместо cache: maven у setup-java — ключ содержит hashFiles('**/pom.xml'),
       # restore-keys — префикс без хэша (устойчивый partial restore, чинит «Failed to restore cache»).
@@ -47,6 +54,8 @@ jobs:
         echo "PROJECT_VERSION=$VER" >> "$GITHUB_ENV"
 
     - name: Build with Maven (fat JAR, тесты)
+      env:
+        NODE_AVAILABLE: '1'   # включает BookmarkletSyntaxTest (Skipped: 0)
       run: mvn -B package
 
     - name: Package portable EXE via jpackage
