@@ -98,6 +98,48 @@ class MilkromugApplicationTests {
     }
 
     @Test
+    void readableExportNoCssLeakAndMarkdownRendered() throws Exception {
+        // Фикстура docs/prompts/fixtures/chat-dirty.json: <style>@media...</style> в html-сообщении
+        // и чистый markdown (#, **, -) в текстовом сообщении.
+        String fixture;
+        try (java.io.InputStream in = new java.io.FileInputStream("docs/prompts/fixtures/chat-dirty.json")) {
+            fixture = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        MvcResult result = mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(fixture))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"id\":")))
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        String id = json.replaceAll(".*\"id\":\"([^\"]+)\".*", "$1");
+
+        String page = mockMvc.perform(get("/preview/" + id))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+        // Служебный CSS страницы не попадает в предпросмотр как видимый текст
+        assertThat(countOccurrences(page, "@media")).isZero();
+        assertThat(countOccurrences(page, "var(--")).isZero();
+        // Markdown сообщений отрендерен в заголовки и жирность
+        assertThat(countOccurrences(page, "<h2")).isGreaterThanOrEqualTo(1);
+        assertThat(countOccurrences(page, "<strong>")).isGreaterThanOrEqualTo(1);
+        // Тело сообщения из фикстуры на месте
+        assertThat(page).contains("Обычный текст сообщения со служебным стилем");
+    }
+
+    private static int countOccurrences(String haystack, String needle) {
+        int count = 0, idx = 0;
+        while ((idx = haystack.indexOf(needle, idx)) >= 0) {
+            count++;
+            idx += needle.length();
+        }
+        return count;
+    }
+
+    @Test
     void previewUnknownIdReturnsFriendlyNotFound() throws Exception {
         mockMvc.perform(get("/preview/no-such-id"))
                 .andExpect(status().isNotFound())
