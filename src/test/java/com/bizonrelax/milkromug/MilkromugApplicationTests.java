@@ -105,6 +105,21 @@ class MilkromugApplicationTests {
     }
 
     @Test
+    void postChatAcceptsTextPlainContentTypeAndReturnsJson() throws Exception {
+        // Репродукция бага букмарклета: some clients send the JSON body with
+        // Content-Type: text/plain and must still get a 200 JSON answer.
+        String body = "{\"title\":\"T\",\"messages\":[{\"author\":\"user\",\"text\":\"Привет\"}]}";
+        mockMvc.perform(post("/chat")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Origin", "https://chat.qwen.ai")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().string(containsString("\"id\"")));
+    }
+
+    @Test
     void legacyHtmlModeStillWorks() throws Exception {
         String body = """
                 {"title":"Легаси","messages":[{"author":"user","text":"Старый режим","html":false}]}

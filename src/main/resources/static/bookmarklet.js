@@ -31,9 +31,9 @@
       alert('Milkromug: ' + html.replace(/<[^>]*>/g, ' '));
     }
   }
-  function fail(err) {
+  function fail(err, extra) {
     console.warn('[Milkromug] ошибка захвата:', err);
-    show('<h2>&#9749; Milkromug</h2><p><b>Не удалось отправить чат в Milkromug.</b></p><ol><li>Запусти <b>Milkromug.exe</b> (двойной клик по иконке).</li><li>Дождись, пока сервер поднимется на <code>http:\u002F\u002Flocalhost:8080</code>.</li><li>Вернись на страницу чата и <b>повтори клик по закладке</b>.</li></ol><p style="color:#888">Детали ошибки: ' + String(err && err.message ? err.message : err) + '</p>');
+    show('<h2>&#9749; Milkromug</h2><p><b>Не удалось отправить чат в Milkromug.</b></p><ol><li>Запусти <b>Milkromug.exe</b> (двойной клик по иконке).</li><li>Дождись, пока сервер поднимется на <code>http:\u002F\u002Flocalhost:8080</code>.</li><li>Вернись на страницу чата и <b>повтори клик по закладке</b>.</li></ol><p style="color:#888">Детали ошибки: ' + String(err && err.message ? err.message : err) + (extra ? '<br/>' + extra : '') + '</p>');
   }
   /* ---- временный индикатор статуса прямо на странице чата ---- */
   var toast = document.createElement('div');
@@ -149,8 +149,12 @@
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title: title, messages: messages })
   }).then(function (resp) {
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    return resp.json();
+    var ctype = (resp.headers.get('content-type') || '').toLowerCase();
+    return resp.text().then(function (text) {
+      if (!resp.ok) { throw new Error('HTTP ' + resp.status + ' от сервера'); }
+      if (ctype.indexOf('json') < 0) { var e = new Error('Сервер ответил не JSON (' + (ctype || 'без content-type') + ')'); e.raw = text; throw e; }
+      try { return JSON.parse(text); } catch (e2) { var e3 = new Error('Не удалось разборать ответ сервера как JSON'); e3.raw = text; throw e3; }
+    });
   }).then(function (data) {
     done('\u2713 Готово, открываю предпросмотр');
     if (win) {
@@ -159,7 +163,8 @@
       location.href = data.url;
     }
   }).catch(function (err) {
-    failHere('\u2715 Сервер недоступен');
-    fail(err);
+    failHere('\u2715 Ошибка отправки');
+    var extra = err && err.raw ? ('Статус ответа: ' + String(err.message) + '; начало тела: ' + err.raw.slice(0, 200)) : null;
+    fail(err, extra);
   });
 })();
