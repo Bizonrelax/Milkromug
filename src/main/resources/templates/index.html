@@ -6,6 +6,68 @@
     <link rel="stylesheet" th:href="@{/css/print.css}" href="/css/print.css"/>
     <!-- Спиннер шрифта интерфейса: применяем до отрисовки, без «прыжка» текста -->
     <script th:src="@{/js/ui-font.js}" src="/js/ui-font.js" defer></script>
+    <style>
+        /* Кнопки главной страницы (вне print.css — его трогать нельзя) */
+        .raise-wrap { position: relative; display: inline-block; }
+        .raise-btn {
+            display: inline-block;
+            padding: 14px 28px;
+            border-radius: 12px;
+            background: #6b4f3a;
+            color: #fff !important;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+            cursor: pointer;
+            border: none;
+            font-size: 1em;
+        }
+        .raise-btn:hover { background: #7d5c44; }
+        .demo-btn {
+            display: inline-block;
+            padding: 14px 28px;
+            border-radius: 12px;
+            background: #4a7ba6;
+            color: #fff !important;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+            cursor: pointer;
+            border: none;
+            font-size: 1em;
+        }
+        .demo-btn:hover { background: #5b8db8; }
+        .big-link { font-size: 1.25em; font-weight: 700; }
+        /* Плавающая подсказка со стрелкой: браузеры запрещают создавать
+           закладки программно — пользователь должен перетащить кнопку сам. */
+        .raise-tip {
+            position: absolute;
+            top: calc(100% + 16px);
+            left: 8px;
+            z-index: 20;
+            width: min(440px, 90vw);
+            background: #fffdf5;
+            border: 2px solid #d9c9a3;
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
+            font-size: .9em;
+            line-height: 1.5;
+        }
+        .raise-tip::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 28px;
+            width: 16px;
+            height: 16px;
+            background: #fffdf5;
+            border-left: 2px solid #d9c9a3;
+            border-top: 2px solid #d9c9a3;
+            transform: rotate(45deg);
+        }
+        .actions-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 20px 0; }
+    </style>
 </head>
 <body>
 <header class="toolbar no-print">
@@ -30,31 +92,56 @@
 </header>
 
 <main id="chatPreview">
-    <!-- Крупный блок «Как пользоваться» — захват чата одним кликом -->
+    <!-- Встречаем человека кнопками, а не стеной curl/JSON -->
     <section class="howto no-print" style="max-width:720px;margin:24px auto;font-size:16px;line-height:1.6">
         <h2 style="margin-bottom:12px">☕ Как пользоваться</h2>
+
+        <div class="actions-row">
+            <span class="raise-wrap">
+                <button type="button" class="raise-btn" id="raiseBtn">🚀 Поднять</button>
+                <span class="raise-tip no-print" id="raiseTip" hidden>
+                    ↖ <b>Перетащи</b> кнопку <b>«Milkromug Capture»</b> на панель закладок
+                    браузера — это нужно сделать <b>только один раз</b>.<br/>
+                    Браузеры <b>запрещают программам создавать закладки</b> — это требование
+                    безопасности, поэтому автоустановка невозможна и подсказка обязательна.
+                    После перетаскивания просто кликай по закладке в любом чате с ИИ.
+                </span>
+            </span>
+            <button type="button" class="demo-btn" id="demoChatBtn">💬 Демо-чат без curl</button>
+        </div>
+
+        <p class="big-link">
+            🔖 Страница букмарклета:
+            <a th:href="@{/bookmarklet}" href="/bookmarklet">/bookmarklet</a>
+            &nbsp;·&nbsp;
+            <a th:href="@{/about}" href="/about">Об программе / About</a>
+        </p>
+
         <ol style="padding-left:24px">
-            <li style="margin-bottom:10px"><b>Запусти Milkromug.exe</b> — локальный сервер поднимется на
-                <code>http://localhost:8080</code>.</li>
-            <li style="margin-bottom:10px"><b>Открой <a href="/bookmarklet">http://localhost:8080</a>
-                    (страница «Milkromug Capture»)</b>
+            <li style="margin-bottom:10px"><b>Нажми «Поднять»</b> — откроется страница
+                <a th:href="@{/bookmarklet}" href="/bookmarklet">Milkromug Capture</a>,
                 и перетащи кнопку <b>«Milkromug Capture»</b> на панель закладок браузера.</li>
             <li style="margin-bottom:10px"><b>Открой чат с ИИ</b> (chat.qwen.ai, chatgpt.com, gemini.google.com…)
                 и <b>кликни по закладке</b> — чат будет отправлен в Milkromug.</li>
             <li><b>В новой вкладке</b> настрой размер шрифта спиннерами и нажми
                 <b>«Сохранить в PDF»</b> (печать → сохранить как PDF).</li>
         </ol>
-    </section>
 
-    <p class="placeholder">
-        Отправьте JSON с чатом на <code>POST /chat</code>
-        (например, через <code>curl</code>) — и здесь появится печатная версия диалога.
-        Захваченные букмарклетом чаты сохраняются в памяти (до 20) и открываются
-        по ссылке <code>/preview/{id}</code>.
-    </p>
-    <pre class="sample no-print"><code>curl -X POST http://localhost:8080/chat \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Демо","messages":[{"author":"user","text":"Привет!"}]}'</code></pre>
+        <p class="placeholder">
+            Захваченные букмарклетом чаты сохраняются в памяти (до 20) и открываются
+            по ссылке <code>/preview/{id}</code>. Хотите посмотреть результат прямо сейчас —
+            нажмите <b>«Демо-чат без curl»</b>.
+        </p>
+
+        <!-- Технические примеры спрятаны: новичку они только мешают -->
+        <details class="no-print">
+            <summary>Для тех, кто предпочитает curl (технические примеры)</summary>
+            <p>Windows <code>cmd</code> (одна строка, двойные кавычки, внутренние экранированы):</p>
+            <pre class="sample"><code>curl -X POST http://localhost:8080/chat -H "Content-Type: application/json" -d "{\"title\":\"Демо\",\"messages\":[{\"author\":\"user\",\"text\":\"Привет!\"}]}"</code></pre>
+            <p>PowerShell:</p>
+            <pre class="sample"><code>Invoke-RestMethod -Uri http://localhost:8080/chat -Method Post -ContentType "application/json" -Body '{"title":"Демо","messages":[{"author":"user","text":"Привет!"}]}'</code></pre>
+        </details>
+    </section>
 </main>
 
 <script>
@@ -74,6 +161,42 @@
 
     spinner.addEventListener('input', applyFont);
     applyFont();
+
+    // «Поднять»: открыть страницу букмарклета в новой вкладке + показать
+    // плавающую подсказку про перетаскивание (браузеры запрещают создавать
+    // закладки программно — объясняем это пользователю).
+    const raiseBtn = document.getElementById('raiseBtn');
+    const raiseTip = document.getElementById('raiseTip');
+    raiseBtn.addEventListener('click', function () {
+        window.open('/bookmarklet', '_blank');
+        raiseTip.hidden = false;
+    });
+
+    // Демо-чат: шлём POST демо-JSON на /chat и открываем url из ответа.
+    const demoBtn = document.getElementById('demoChatBtn');
+    demoBtn.addEventListener('click', function () {
+        const demo = {
+            title: 'Демо-чат Milkromug',
+            messages: [
+                { author: 'user', text: 'Привет! Покажи, как будет выглядеть мой чат в PDF.', html: false },
+                { author: 'assistant', text: 'Конечно! Вот пример: блоки кода сохраняются моноширинными,\nа длинные сообщения не обрезаются.\n\n```java\nSystem.out.println("Milkromug!");\n```', html: false }
+            ]
+        };
+        fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(demo)
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data && data.url) {
+                    window.open(data.url, '_blank');
+                } else {
+                    alert('Milkromug не вернул ссылку на предпросмотр.');
+                }
+            })
+            .catch(function (e) { alert('Не удалось отправить демо-чат: ' + e); });
+    });
 </script>
 </body>
 </html>

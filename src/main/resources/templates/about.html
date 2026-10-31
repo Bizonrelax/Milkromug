@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Milkromug — об программе / About</title>
+    <link rel="stylesheet" th:href="@{/css/print.css}" href="/css/print.css"/>
+    <!-- Спиннер шрифта интерфейса: применяем до отрисовки, без «прыжка» текста -->
+    <script th:src="@{/js/ui-font.js}" src="/js/ui-font.js" defer></script>
+    <style>
+        .about-content { max-width: 860px; margin: 24px auto; padding: 24px 32px; background: #fff;
+            border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.08); line-height: 1.6; }
+        .credits-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .credits-table th, .credits-table td { border: 1px solid #d9c9a3; padding: 8px 10px; text-align: left; }
+        .credits-table th { background: #fff8ea; }
+        .lang-switch a { font-weight: 700; }
+    </style>
+</head>
+<body>
+<header class="toolbar no-print">
+    <h1 class="brand">☕ Milkromug</h1>
+
+    <!-- Спиннер №1: размер шрифта ПЕЧАТНОГО чата (здесь не используется, спиннеры обязательны) -->
+    <label for="fontSpinner">Шрифт чата:</label>
+    <input type="number" id="fontSpinner" name="fontSpinner" min="8" max="24" step="1" value="12"/>
+    <span class="hint">pt (8–24)</span>
+
+    <!-- Спиннер №2: размер шрифта ИНТЕРФЕЙСА: 10..22 px, localStorage -->
+    <label for="uiFontSpinner">Шрифт UI:</label>
+    <input type="number" id="uiFontSpinner" name="uiFontSpinner" min="10" max="22" step="1" value="16"/>
+    <span class="hint">px (10–22)</span>
+
+    <button type="button" id="savePdfBtn" onclick="window.print()">💾 Сохранить в PDF</button>
+</header>
+
+<main class="about-content">
+    <p class="lang-switch no-print">
+        Язык:
+        <a th:href="@{/about(lang='ru')}" href="/about?lang=ru">RU</a> ·
+        <a th:href="@{/about(lang='en')}" href="/about?lang=en">EN</a> ·
+        <a th:href="@{/}" href="/">← Главная</a>
+    </p>
+
+    <!-- ==================== RU ==================== -->
+    <div th:if="${lang == 'ru'}">
+        <h2>Об программе Milkromug</h2>
+
+        <h3>Преамбула</h3>
+        <p>Печать чатов средствами браузера («Сохранить как PDF») безжалостно режет
+           сообщения: длинные ответы обрываются на середине страницы, блоки кода
+           теряются, а в документ попадают сайдбары, кнопки и прочие элементы
+           интерфейса. Бесплатных офлайн-инструментов такого класса не существовало —
+           поэтому был создан <b>Milkromug</b>: локальная программа, которая собирает
+           полный чат с ИИ и превращает его в чистый, правильно разбитый по страницам PDF.</p>
+
+        <h3>Функционал</h3>
+        <ul>
+            <li>Захват переписки из любого веб-чата с ИИ одним кликом по закладке
+                (букмарклет <b>Milkromug Capture</b>).</li>
+            <li>Локальный сервер на <code>http://localhost:8080</code>: приём чата,
+                санитизация HTML, хранение последних 20 захватов в памяти.</li>
+            <li>Печатный предпросмотр с настройкой размера шрифта (чат 8–24 pt,
+                интерфейс 10–22 px) и сохранением в PDF через диалог печати браузера.</li>
+            <li>Демо-чат на главной странице — можно посмотреть результат без curl.</li>
+        </ul>
+
+        <h3>Преимущества</h3>
+        <ul>
+            <li><b>Бесплатно</b> — никаких подписок и лимитов.</li>
+            <li><b>Полностью офлайн</b> — все данные остаются на вашем компьютере.</li>
+            <li><b>Открытый код</b> — лицензия The Unlicense, делайте с кодом что хотите.</li>
+            <li><b>Java не нужна</b> — JRE 21 уже встроена в портативный пакет.</li>
+            <li><b>Захват одним кликом</b> — установили закладку один раз и пользуетесь.</li>
+        </ul>
+
+        <h3>Как скачать и запустить</h3>
+        <ol>
+            <li>Скачайте <code>Milkromug-portable-win64.zip</code> со страницы
+                <a href="https://github.com/Bizonrelax/Milkromug/releases">Releases</a>.</li>
+            <li>Распакуйте в любую папку и запустите <code>Milkromug\Milkromug.exe</code>
+                — откроется консольное окно с логами, держите его открытым.</li>
+            <li>Откройте <a th:href="@{/}" href="http://localhost:8080">http://localhost:8080</a>
+                в браузере.</li>
+            <li>Чтобы остановить программу, закройте консольное окно или выполните
+                памятку: <code>taskkill /IM Milkromug.exe /F</code>. Повторный запуск
+                безопасен: второй экземпляр увидит занятый порт 8080 и корректно завершится.</li>
+        </ol>
+
+        <h3>Репозиторий</h3>
+        <p><a href="https://github.com/Bizonrelax/Milkromug">github.com/Bizonrelax/Milkromug</a></p>
+
+        <h3>Кредиты</h3>
+        <table class="credits-table">
+            <thead>
+            <tr><th>Проект</th><th>Версия</th><th>Лицензия</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${credits}">
+                <td><a th:href="${c.url}" href="#" th:text="${c.name}">Spring Boot</a></td>
+                <td th:text="${c.version}">3.3.5</td>
+                <td th:text="${c.license}">Apache License 2.0</td>
+            </tr>
+            </tbody>
+        </table>
+        <p>Разработано с помощью ИИ-ассистентов <b>Qwen</b> и <b>Qwen Coder</b>.</p>
+    </div>
+
+    <!-- ==================== EN (зеркало RU) ==================== -->
+    <div th:if="${lang == 'en'}">
+        <h2>About Milkromug</h2>
+
+        <h3>Preamble</h3>
+        <p>The browser's built-in "Print to PDF" ruthlessly cuts chat transcripts:
+           long answers break in the middle of a page, code blocks get lost, and sidebars,
+           buttons and other UI clutter end up in the document. There were no free offline
+           tools of this class — that is why <b>Milkromug</b> was created: a local program
+           that captures the full AI chat and turns it into a clean, properly paginated PDF.</p>
+
+        <h3>Features</h3>
+        <ul>
+            <li>Capture a conversation from any web AI chat with a single bookmarklet click
+                (<b>Milkromug Capture</b>).</li>
+            <li>Local server at <code>http://localhost:8080</code>: receives the chat,
+                sanitizes HTML, keeps the last 20 captures in memory.</li>
+            <li>Print preview with adjustable fonts (chat 8–24 pt, UI 10–22 px) and
+                Save-as-PDF via the browser print dialog.</li>
+            <li>Demo chat on the home page — see the result without curl.</li>
+        </ul>
+
+        <h3>Advantages</h3>
+        <ul>
+            <li><b>Free</b> — no subscriptions, no limits.</li>
+            <li><b>Fully offline</b> — all data stays on your computer.</li>
+            <li><b>Open source</b> — The Unlicense, do whatever you want with the code.</li>
+            <li><b>No Java required</b> — JRE 21 is bundled in the portable package.</li>
+            <li><b>One-click capture</b> — install the bookmark once, use it forever.</li>
+        </ul>
+
+        <h3>How to download and run</h3>
+        <ol>
+            <li>Download <code>Milkromug-portable-win64.zip</code> from the
+                <a href="https://github.com/Bizonrelax/Milkromug/releases">Releases</a> page.</li>
+            <li>Unpack anywhere and run <code>Milkromug\Milkromug.exe</code> — a console
+                window with logs opens; keep it open while the program runs.</li>
+            <li>Open <a th:href="@{/}" href="http://localhost:8080">http://localhost:8080</a>
+                in your browser.</li>
+            <li>To stop the program, close the console window or run the cheat sheet:
+                <code>taskkill /IM Milkromug.exe /F</code>. Relaunching is safe: the second
+                instance detects busy port 8080 and exits gracefully.</li>
+        </ol>
+
+        <h3>Repository</h3>
+        <p><a href="https://github.com/Bizonrelax/Milkromug">github.com/Bizonrelax/Milkromug</a></p>
+
+        <h3>Credits</h3>
+        <table class="credits-table">
+            <thead>
+            <tr><th>Project</th><th>Version</th><th>License</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${credits}">
+                <td><a th:href="${c.url}" href="#" th:text="${c.name}">Spring Boot</a></td>
+                <td th:text="${c.version}">3.3.5</td>
+                <td th:text="${c.license}">Apache License 2.0</td>
+            </tr>
+            </tbody>
+        </table>
+        <p>Developed with the help of AI assistants <b>Qwen</b> and <b>Qwen Coder</b>.</p>
+    </div>
+</main>
+
+<script>
+    // Спиннеры интерфейса живут на всех страницах; логика #uiFontSpinner — в /js/ui-font.js.
+    const spinner = document.getElementById('fontSpinner');
+    spinner.addEventListener('input', function () {
+        let v = parseInt(spinner.value, 10);
+        if (isNaN(v)) v = 12;
+        v = Math.max(8, Math.min(24, v));
+        document.querySelector('.about-content').style.fontSize = v + 'pt';
+    });
+</script>
+</body>
+</html>
