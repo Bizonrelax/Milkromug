@@ -54,6 +54,16 @@
   } else if (/(\.|^)gemini\.google\.com$/.test(host) || /(^|\.)gemini\.google$/.test(host)) {
     SELECTORS.push('message-content');
     SELECTORS.push('.model-response-text');
+  } else if (/share\.google$/.test(host) || /(^|\.)share\.google$/.test(host)) {
+    /* Трассировка живой страницы share.google/aimode (промпт-13): реплики
+     * диалога лежат в section.message (класс message-user / message-assistant),
+     * текст — в div.content. Мусором раньше матчились <style>/<script> и
+     * noscript-блоки страницы: их innerText (CSS-правила .fd1gae{...}, JS
+     * сниппеты window._hst...) попадал в сообщения. Правило отсева: перед
+     * снятием innerText вырезаем служебные узлы (см. stripServiceNodes) и
+     * берём только section.message > div.content. */
+    SELECTORS.push('section.message > div.content');
+    SELECTORS.push('div.content');
   }
   var nodes = [];
   for (var s = 0; s < SELECTORS.length && nodes.length === 0; s++) {
