@@ -16,7 +16,7 @@
     <!-- th:inline="none": Thymeleaf не должен трактовать [[ ... ]] внутри JS как привязку -->
     <script defer th:inline="none">
         window.addEventListener('DOMContentLoaded', function () {
-            if (window.hljs && typeof hljs.highlightAll === 'function') {
+            if (window.hljs != null && typeof hljs.highlightAll === 'function') {
                 hljs.highlightAll();
             }
         });

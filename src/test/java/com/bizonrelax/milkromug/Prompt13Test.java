@@ -40,9 +40,13 @@ class Prompt13Test {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         String id = body.replaceAll(".*\"id\":\"([^\"]+)\".*", "$1");
-        String preview = mockMvc.perform(get("/preview/" + id))
+        // id может содержать [[...]] — для MockMvc это синтаксис uri template
+        // variables, поэтому экранируем квадратные скобки percent-encoding'ом.
+        String encodedId = java.net.URLEncoder.encode(id, java.nio.charset.StandardCharsets.UTF_8)
+                .replace("[", "%5B").replace("]", "%5D");
+        String preview = mockMvc.perform(get("/preview/" + encodedId))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         assertThat(preview).doesNotContain("window._hst");
         assertThat(preview).doesNotContain(".fd1gae{");
         assertThat(preview).contains("DELL Laptop Warframe Performance - Google Search");
@@ -55,7 +59,8 @@ class Prompt13Test {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(page).contains("loader");
-        assertThat(page).contains("fetch(\"http://localhost:8080/bookmarklet.js\"");
+        // href проходит через Thymeleaf-экранирование, поэтому " -> &quot;
+        assertThat(page).contains("fetch(&quot;http://localhost:8080/bookmarklet.js?v=");
         // кнопка — javascript:-ссылка
         assertThat(page).contains("javascript:");
         // аварийный полный однострочник лежит в details
@@ -67,7 +72,7 @@ class Prompt13Test {
     void loaderHrefShape() {
         String href = BookmarkletSource.buildLoaderHref();
         assertThat(href).startsWith("javascript:");
-        assertThat(href).contains("fetch(\"http://localhost:8080/bookmarklet.js\"");
+        assertThat(href).contains("fetch(\"http://localhost:8080/bookmarklet.js?v=");
     }
 
     /** /bookmarklet.js: Access-Control-Allow-Origin: * и Cache-Control: no-store. */

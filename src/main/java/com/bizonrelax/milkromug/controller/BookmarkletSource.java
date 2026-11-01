@@ -77,8 +77,8 @@ public final class BookmarkletSource {
      * должен прийти живьём).
      */
     public static String buildLoaderHref() {
-        return "javascript:(function(){var s='" + SERVER_URL + "';var u=s.indexOf('/bookmarklet.js')>=0?s:s+'/bookmarklet.js';"
-                + "fetch(\"' + u + '?v=' + Date.now(),{cache:'no-store'})"
+        return "javascript:(function(){var s='" + SERVER_URL + "';"
+                + "fetch(\"" + SERVER_URL + "/bookmarklet.js?v=' + Date.now(),{cache:'no-store'})"
                 + ".then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()})"
                 + ".then(function(c){(new Function(c))()})"
                 + ".catch(function(e){alert('Milkromug: ' + e.message + ' \\u2014 \\u0417\\u0430\\u043F\\u0443\\u0441\\u0442\\u0438\\u0442\\u0435 Milkromug \\u0438 \\u043F\\u043E\\u0432\\u0442\\u043E\\u0440\\u0438\\u0442\\u0435 \\u043A\\u043B\\u0438\\u043A.')})();";
