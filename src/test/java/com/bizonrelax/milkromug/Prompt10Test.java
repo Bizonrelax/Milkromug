@@ -46,7 +46,7 @@ class Prompt10Test {
         mockMvc.perform(get("/bookmarklet"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("desktop-shortcut")))
-                .andExpect(content().string(containsString("CTRL+SHIFT+G")));
+                .andExpect(content().string(containsString("CTRL+ALT+M")));
     }
 
     /* ---------- Шаг 8: markdown-расширения и подсветка ---------- */

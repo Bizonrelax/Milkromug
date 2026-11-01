@@ -3,13 +3,12 @@ package com.bizonrelax.milkromug;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.util.Locale;
 
 /**
  * Проверка доступности порта перед запуском Spring Boot.
  *
  * <p>Если порт уже занят (обычно это второй запущенный экземпляр Milkromug.exe),
- * печатаем дружелюбное сообщение на русском (или английском для нерусской локали)
+ * печатаем дружелюбное сообщение на английском (Prompt-14: no mojibake)
  * и завершаем процесс с кодом 0 — вместо непонятного "Failed to launch JVM"
  * и stacktrace от BindException.</p>
  */
@@ -53,55 +52,47 @@ final class PortGuard {
     }
 
     /**
-     * Если порт занят — печатает подсказку и завершает JVM с кодом 0.
-     * Если порт свободен — сразу освобождает тестовый сокет и возвращает управление.
+     * If the port is busy - prints a hint and halts the JVM with exit code 0.
+     * If the port is free - closes the probe socket and returns control.
      *
-     * <p>Промпт-13 (Console-wait): в среде с консолью (System.console() != null,
-     * например двойной клик по Milkromug.exe на Windows) после сообщения ждём
-     * нажатие Enter — иначе окно консоли мгновенно закрывается и выглядит как
-     * «нет реакции». В headless-режиме (console == null) ожидания нет, код выхода 0.</p>
+     * <p>Prompt-13 (Console-wait): in an environment with a console
+     * (System.console() != null, e.g. double click on Milkromug.exe on Windows)
+     * we wait for Enter after the message - otherwise the console window closes
+     * instantly and looks like "no reaction". In headless mode (console == null)
+     * there is no waiting, exit code 0.</p>
      */
     static void ensurePortAvailable(int port) {
         try (ServerSocket probe = new ServerSocket()) {
             probe.setReuseAddress(false);
             probe.bind(new InetSocketAddress(port));
-            return; // порт свободен — всё в порядке
+            return; // port is free - all good
         } catch (IOException busy) {
             System.out.println(alreadyRunningMessage(port));
             waitForEnterIfConsole();
             System.out.flush();
-            // Код 0: повторный запуск — не ошибка, а штатная ситуация.
+            // Exit code 0: a second launch is not an error, just a normal situation.
             Runtime.getRuntime().halt(0);
         }
     }
 
     /**
-     * Промпт-13: ждать Enter только если есть живая консоль (System.console() != null);
-     * в headless/CI ожидание пропускаем. Вынесено из PortGuard-логики связывания порта —
-     * трогается только печать и ожидание.
+     * Prompt-13: wait for Enter only if there is a live console (System.console() != null);
+     * in headless/CI the wait is skipped.
      */
     static void waitForEnterIfConsole() {
         if (System.console() != null) {
-            // Промпт-13: читаемая консоль — разделитель и понятная подсказка.
+            // Prompt-13/Prompt-14: readable console - separator and hint in English only.
             System.out.println("------------------------------------------------------------");
-            System.out.println("Milkromug работает. Чтобы остановить — нажмите Enter.");
-            System.out.println("(To stop Milkromug, press Enter.)");
+            System.out.println("Milkromug is running. To stop it, press Enter.");
             System.out.flush();
             System.console().readLine();
         }
     }
 
     /**
-     * Сообщение о занятом порте: по-русски для русской локали, иначе по-английски.
-     * Пакет jpackage собирается под en-US, но ОС пользователя может быть любой.
+     * Message about a busy port: English only (Prompt-14: no mojibake on Windows consoles).
      */
     static String alreadyRunningMessage(int port) {
-        Locale locale = Locale.getDefault();
-        if ("ru".equalsIgnoreCase(locale.getLanguage())) {
-            return "Milkromug уже запущен. Откройте http://localhost:" + port
-                    + " в браузере. Для перезапуска закройте старый процесс: "
-                    + "taskkill /IM Milkromug.exe /F";
-        }
         return "Milkromug is already running. Open http://localhost:" + port
                 + " in your browser. To restart it, close the old process: "
                 + "taskkill /IM Milkromug.exe /F";
