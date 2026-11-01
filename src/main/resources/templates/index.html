@@ -67,6 +67,22 @@
             transform: rotate(45deg);
         }
         .actions-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 20px 0; }
+        /* Быстрый старт: две большие кнопки-ссылки для новичка */
+        .quickstart-row { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; }
+        .quickstart-btn {
+            display: inline-block;
+            padding: 18px 32px;
+            border-radius: 14px;
+            background: #6b4f3a;
+            color: #fff !important;
+            font-weight: 700;
+            font-size: 1.15em;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+        }
+        .quickstart-btn:hover { background: #7d5c44; }
+        .quickstart-btn.alt { background: #4a7ba6; }
+        .quickstart-btn.alt:hover { background: #5b8db8; }
     </style>
 </head>
 <body>
@@ -95,6 +111,14 @@
     <!-- Встречаем человека кнопками, а не стеной curl/JSON -->
     <section class="howto no-print" style="max-width:720px;margin:24px auto;font-size:16px;line-height:1.6">
         <h2 style="margin-bottom:12px">☕ Как пользоваться</h2>
+
+        <!-- Быстрый старт: две большие кнопки -->
+        <div class="quickstart-row">
+            <a class="quickstart-btn" th:href="@{/bookmarklet}" href="/bookmarklet"
+               title="Открыть страницу установки букмарклета Milkromug Capture">🔖 Настроить захват</a>
+            <a class="quickstart-btn alt" th:href="@{/about}" href="/about"
+               title="Узнать, что умеет Milkromug и как он устроен">ℹ️ О программе</a>
+        </div>
 
         <div class="actions-row">
             <span class="raise-wrap">
