@@ -46,9 +46,17 @@ public class ChatController {
             .preserveRelativeLinks(false);
 
     private final ChatStore chatStore;
+    private final com.bizonrelax.milkromug.service.ExportService exportService;
 
-    public ChatController(ChatStore chatStore) {
+    public ChatController(ChatStore chatStore,
+                          com.bizonrelax.milkromug.service.ExportService exportService) {
         this.chatStore = chatStore;
+        this.exportService = exportService;
+    }
+
+    /** Safelist для экспорта (тот же, что у предпросмотра). */
+    public static org.jsoup.safety.Safelist exportSafelist() {
+        return CHAT_SAFELIST;
     }
 
     /** Стартовая страница: минимальный UI со спиннером размера шрифта. */
@@ -100,10 +108,12 @@ public class ChatController {
                         .writeValueAsString(new ChatResponse(id, "http://localhost:8080/preview/" + id)));
     }
 
-    /** Печатный предпросмотр ранее сохранённого чата; нет id — дружелюбная страница 404. */
+    /** Печатный предпросмотр ранее сохранённого чата; нет id — дружелюбная страница 404.
+     *  С параметром ?format=md|html|txt|json отдаёт файл-экспорт с attachment. */
     @GetMapping("/preview/{id}")
-    public String preview(@PathVariable("id") String id,
+    public Object preview(@PathVariable("id") String id,
                           @RequestParam(name = "font", defaultValue = "12") int fontSize,
+                          @RequestParam(name = "format", required = false) String format,
                           Model model,
                           jakarta.servlet.http.HttpServletResponse response) {
         var found = chatStore.find(id);
@@ -114,9 +124,25 @@ public class ChatController {
             return "chat-not-found";
         }
         ChatStore.StoredChat chat = found.get();
+
+        // Экспорт в текстовый формат: отдать файл с Content-Disposition: attachment.
+        if (format != null && !format.isBlank()) {
+            return switch (format.toLowerCase()) {
+                case "md" -> exportService.toMarkdown(id, chat.title(), chat.request());
+                case "txt" -> exportService.toPlainText(id, chat.title(), chat.request());
+                case "html" -> exportService.toStandaloneHtml(id, chat.title(), chat.request());
+                case "json" -> exportService.toJson(id, chat.request());
+                default -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST);
+                    yield null;
+                }
+            };
+        }
+
         model.addAttribute("title", chat.title());
         model.addAttribute("messages", renderMessages(chat.request()));
         model.addAttribute("fontSize", clampFont(fontSize));
+        model.addAttribute("chatId", id);
         return "chat-print";
     }
 
