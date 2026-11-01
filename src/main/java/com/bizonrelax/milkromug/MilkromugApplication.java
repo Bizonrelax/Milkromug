@@ -14,6 +14,9 @@ public class MilkromugApplication {
         // Если порт уже занят (второй экземпляр), печатаем понятную подсказку
         // и выходим с кодом 0 — до старта Spring Boot и без stacktrace.
         PortGuard.ensurePortAvailable(PortGuard.resolvePort(args));
-        SpringApplication.run(MilkromugApplication.class, args);
+        SpringApplication app = new SpringApplication(MilkromugApplication.class);
+        // Четыре ASCII-экспоната коллекции подряд при старте (banner.txt + Gwen's).
+        app.setBanner(new MilkromugBanner());
+        app.run(args);
     }
 }
