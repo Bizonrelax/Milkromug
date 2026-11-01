@@ -60,8 +60,11 @@ public class BrowserAutoOpen implements ApplicationListener<ApplicationReadyEven
         String url = "http://localhost:" + port + "/";
         try {
             Desktop.getDesktop().browse(new URI(url));
+            // Промпт-13: диагностика вместо молчания — печатаем результат в консоль.
+            System.out.println("Browser opened: " + url);
             log.info("Дашборд открыт в браузере: {}", url);
         } catch (Exception e) {
+            System.out.println("Could not open browser automatically - go to http://localhost:" + port);
             log.warn("Не удалось открыть браузер автоматически ({}). Откройте {} вручную.",
                     e.getMessage(), url);
         }

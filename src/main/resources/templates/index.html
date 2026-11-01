@@ -104,6 +104,13 @@
 <header class="toolbar no-print">
     <h1 class="brand">☕ Milkromug</h1>
 
+    <!-- Промпт-13: ссылка на глоссарий из шапки -->
+    <nav style="margin-left:auto" class="no-print">
+        <a th:href="@{/glossary(lang='ru')}" href="/glossary?lang=ru"
+           title="Глоссарий и FAQ для новичков">📖 Глоссарий</a> ·
+        <a th:href="@{/about}" href="/about" title="Об программе">About</a>
+    </nav>
+
     <!-- Спиннер №1: размер шрифта ПЕЧАТНОГО чата: 8..24 pt (?font=N) -->
     <label for="fontSpinner">Шрифт чата:</label>
     <input type="number" id="fontSpinner" name="fontSpinner"

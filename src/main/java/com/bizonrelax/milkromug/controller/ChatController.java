@@ -149,9 +149,23 @@ public class ChatController {
     /** Страница-инструкция с кнопкой-закладкой Milkromug Capture. */
     @GetMapping("/bookmarklet")
     public String bookmarklet(Model model) {
-        model.addAttribute("bookmarkletHref", BookmarkletSource.buildBookmarkletHref());
-        model.addAttribute("bookmarkletMinified", BookmarkletSource.buildMinifiedSource());
+        // Промпт-13: перетаскиваемая кнопка и textarea — это ЛОАДЕР (fetch + eval
+        // свежего кода с /bookmarklet.js), закладка переживает обновления программы.
+        model.addAttribute("bookmarkletHref", BookmarkletSource.buildLoaderHref());
+        model.addAttribute("bookmarkletMinified", BookmarkletSource.buildLoaderHref());
+        // Аварийный вариант (полный старый однострочник) — в details на странице.
+        model.addAttribute("bookmarkletLegacy", BookmarkletSource.buildLegacyOneLiner());
         return "bookmarklet";
+    }
+
+    /** Глоссарий и FAQ для новичков (промпт-13): RU+EN зеркала, ?lang=ru|en. */
+    @GetMapping("/glossary")
+    public String glossary(@RequestParam(name = "lang", required = false) String lang,
+                           @org.springframework.web.bind.annotation.RequestHeader(
+                                   name = "Accept-Language", required = false) String acceptLanguage,
+                           Model model) {
+        model.addAttribute("lang", AboutController.resolveLang(lang, acceptLanguage));
+        return "glossary";
     }
 
     /**

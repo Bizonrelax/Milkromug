@@ -38,6 +38,13 @@
 <header class="toolbar no-print">
     <h1 class="brand">☕ Milkromug</h1>
 
+    <!-- Промпт-13: ссылка на глоссарий из шапки -->
+    <nav style="margin-left:auto" class="no-print">
+        <a th:href="@{/glossary(lang='ru')}" href="/glossary?lang=ru"
+           title="Глоссарий и FAQ для новичков">📖 Глоссарий</a> ·
+        <a th:href="@{/about}" href="/about" title="Об программе">About</a>
+    </nav>
+
     <!-- Спиннер №1: размер шрифта ПЕЧАТНОГО чата (на этой странице не используется, но спиннеры обязательны) -->
     <label for="fontSpinner">Шрифт чата:</label>
     <input type="number" id="fontSpinner" name="fontSpinner"
@@ -63,20 +70,33 @@
     </div>
 
     <p>Перетащите кнопку ниже на панель закладок браузера (или создайте закладку
-       и вставьте ссылку из поля под кнопкой вручную):</p>
+       и вставьте ссылку из поля под кнопкой вручную). Это <b>лоадер</b>: он тянет
+       свежий код захвата с сервера при каждом клике — после обновления программы
+       <b>переустанавливать закладку не нужно</b>
+       (<a th:href="@{/glossary}" href="/glossary">что такое букмарклет и лоадер — в глоссарии</a>):</p>
 
     <p>
         <a class="capture-button" id="captureLink"
            th:href="${bookmarkletHref}"
            href="javascript:void(0)"
-           title="Перетащите эту кнопку на панель закладок браузера — закладка «Milkromug Capture» готова">📌 Milkromug Capture</a>
+           title="Перетащите эту кнопку на панель закладок браузера — закладка «Milkromug Capture» готова. Лоадер: всегда свежий код без переустановки">📌 Milkromug Capture (loader)</a>
     </p>
 
     <details>
-        <summary>Минифицированная однострочная версия (для копирования)</summary>
+        <summary>Код лоадера (для копирования — вставлять в поле URL закладки)</summary>
         <textarea class="minified-box" id="minifiedCode" readonly
                   th:text="${bookmarkletMinified}"></textarea>
         <button type="button" title="Скопировать код букмарклета в буфер обмена" onclick="var t=document.getElementById('minifiedCode');t.select();document.execCommand('copy');this.textContent='✓ Скопировано';">Копировать</button>
+    </details>
+
+    <details id="legacy-one-liner">
+        <summary>⚠️ Аварийный вариант: полный однострочник (без лоадера)</summary>
+        <p class="hint">Если сервер недоступен и лоадер не может скачать код —
+           используйте этот полный однострочник. Минус: после обновления программы
+           такую закладку нужно переустанавливать.</p>
+        <textarea class="minified-box" id="legacyCode" readonly
+                  th:text="${bookmarkletLegacy}"></textarea>
+        <button type="button" title="Скопировать аварийный однострочник в буфер обмена" onclick="var t=document.getElementById('legacyCode');t.select();document.execCommand('copy');this.textContent='✓ Скопировано';">Копировать</button>
     </details>
 
     <h3>Как пользоваться</h3>

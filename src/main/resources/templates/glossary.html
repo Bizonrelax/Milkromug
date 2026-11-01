@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Milkromug — Глоссарий и FAQ</title>
+    <link rel="stylesheet" th:href="@{/css/print.css}" href="/css/print.css"/>
+    <script th:src="@{/js/ui-font.js}" src="/js/ui-font.js" defer></script>
+    <style>
+        .glossary-content { max-width: 900px; margin: 24px auto; padding: 24px 32px; background: #fff;
+            border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,.08); line-height: 1.6; }
+        .glossary-content dt { font-weight: 700; margin-top: 14px; }
+        .glossary-content dd { margin-left: 0; margin-bottom: 8px; color: #333; }
+        .glossary-content ol li, .glossary-content ul li { margin-bottom: 6px; }
+        code.inline { background: #f0e9e2; padding: 2px 6px; border-radius: 6px; }
+        h3 { border-bottom: 2px solid #d9c9a3; padding-bottom: 4px; }
+    </style>
+</head>
+<body>
+<header class="toolbar no-print">
+    <h1 class="brand">☕ Milkromug</h1>
+    <nav>
+        <a th:href="@{/}" href="/">Главная</a> ·
+        <a th:href="@{/bookmarklet}" href="/bookmarklet">Букмарклет</a> ·
+        <a th:href="@{/about}" href="/about">Об программе</a> ·
+        <a th:href="@{/glossary(lang='ru')}" href="/glossary?lang=ru" title="Читать на русском">RU</a> ·
+        <a th:href="@{/glossary(lang='en')}" href="/glossary?lang=en" title="Read in English">EN</a>
+    </nav>
+</header>
+
+<main class="glossary-content">
+
+    <!-- ==================== RU ==================== -->
+    <div th:if="${lang == 'ru'}">
+        <h2>📖 Глоссарий и FAQ для новичков</h2>
+
+        <h3>Глоссарий (термины и этимологии)</h3>
+        <dl>
+            <dt>Букмарклет (bookmarklet)</dt>
+            <dd>Слияние английских слов <i>bookmark</i> («закладка») и <i>applet</i>
+                («апплет», маленькая программа). Это закладка браузера, в адрес которой
+                вместо сайта записана небольшая JavaScript-программа: клик по такой
+                закладке запускает код прямо на открытой странице. Букмарклет Milkromug
+                захватывает переписку с ИИ и отправляет её на локальный сервер.</dd>
+
+            <dt>Лоадер (loader, «загрузчик»)</dt>
+            <dd>Особый букмарклет-«закладка-загрузчик»: в самой закладке лежит крошечная
+                строка, которая при клике скачивает свежий код захвата с адреса
+                <code class="inline">http://localhost:8080/bookmarklet.js</code> и выполняет его.
+                Благодаря лоадеру букмарклет переустанавливать не нужно — обновляется код
+                на сервере, а закладка остаётся.</dd>
+
+            <dt>Санитизация (sanitization)</dt>
+            <dd>От англ. <i>sanitize</i> — «очищать, делать безопасным». Это вырезание из
+                HTML чужих тегов, стилей, скриптов и прочего мусора, который страницы чатов
+                тащат вместе с сообщениями. Milkromug выполняет санитизацию на сервере
+                библиотекой jsoup: в предпросмотр и PDF попадают только читаемые реплики,
+                без CSS-правил вида <code class="inline">.fd1gae{...}</code> и служебного JS.</dd>
+
+            <dt>Репозиторий (repository)</dt>
+            <dd>От лат. <i>repositorium</i> — «хранилище». В разработке это хранилище исходного
+                кода проекта с историей изменений (обычно на GitHub/GitLab). Репозиторий
+                Milkromug доступен публично; ссылка — на странице «Об программе».</dd>
+
+            <dt>JSON</dt>
+            <dd>JavaScript Object Notation — текстовый формат обмена данными:
+                <code class="inline">{"author":"user","text":"Привет"}</code>. Им букмарклет
+                передаёт захваченный чат серверу, им же сохранённые чаты отдаются как экспорт.</dd>
+
+            <dt>curl</dt>
+            <dd>Утилита командной строки для запросов к HTTP-серверам (имя от
+                <i>Client URL</i>). Пример проверки, что Milkromug жив:
+                <code class="inline">curl http://localhost:8080/</code>.</dd>
+
+            <dt>localhost</dt>
+            <dd>Зарезервированное доменное имя «этот компьютер» (IP 127.0.0.1). Сервер
+                Milkromug слушает <code class="inline">http://localhost:8080</code> и доступен
+                только с вашей машины — данные никуда не уходят.</dd>
+
+            <dt>Headless («без головы»)</dt>
+            <dd>Режим запуска без графического интерфейса и консоли (например, автоматизация
+                в CI). В headless-режиме Milkromug не ждёт нажатия Enter при занятом порту
+                и завершается сразу с кодом 0.</dd>
+
+            <dt>Markdown</dt>
+            <dd>Лёгкий текст с разметкой: <code class="inline">**жирный**</code>,
+                <code class="inline"># заголовок</code>. Milkromug умеет экспортировать чаты
+                в markdown (<code class="inline">/preview/{id}?format=md</code>).</dd>
+
+            <dt>DOM (Document Object Model)</dt>
+            <dd>«Дерево» открытой веб-страницы, которое видит JavaScript: каждый тег — узел
+                дерева. Букмарклет читает реплики чата именно из DOM вкладки.</dd>
+
+            <dt>Селектор (selector)</dt>
+            <dd>Короткая запись-адрес узлов DOM, например
+                <code class="inline">section.message &gt; div.content</code> — «div.content
+                внутри section.message». Для каждого сайта захвата (chat.qwen.ai, gemini,
+                share.google/aimode…) подобраны свои точные селекторы сообщений.</dd>
+
+            <dt>Ярлык (shortcut)</dt>
+            <dd>В Windows — файл-ссылка (.lnk) на программу или страницу с собственной
+                горячей клавишей. Milkromug создаёт ярлык «Milkromug Capture.lnk»
+                на рабочем столе.</dd>
+
+            <dt>Горячая клавиша (hotkey)</dt>
+            <dd>Комбинация клавиш для быстрой команды. У захвата Milkromug это
+                <b>CTRL+SHIFT+G</b>: откройте чат и нажмите — чат улетит в программу.</dd>
+        </dl>
+
+        <h3>FAQ — частые вопросы</h3>
+        <dl>
+            <dt>Зачем нужен букмарклет и почему нельзя читать чужие вкладки без него?</dt>
+            <dd>Браузер из соображений безопасности запрещает одной странице читать
+                содержимое вкладок с другим сайтом (политика same-origin). Единственный
+                способ «протянуть руку» внутрь вкладки с чатом — выполнить код в контексте
+                самой этой вкладки, чем и является клик по букмарклету. Поэтому расширение
+                или отдельная кнопка браузера здесь не нужны — достаточно закладки.</dd>
+
+            <dt>Надо ли переустанавливать закладку после обновления программы?</dt>
+            <dd>Нет. Перетащите один раз <b>лоадер-кнопку</b> со страницы /bookmarklet:
+                она при каждом клике скачивает актуальный код захвата с локального сервера.
+                Полный однострочник оставлен лишь как аварийный вариант (в блоке
+                «Аварийный вариант» на странице /bookmarklet).</dd>
+
+            <dt>Чем кнопка «Поднять» отличается от «Настроить захват»?</dt>
+            <dd>По фактическому текущему коду главной страницы: <b>«Настроить захват»</b> —
+                это обычная ссылка, которая открывает страницу /bookmarklet в той же
+                вкладке. <b>«Поднять»</b> — кнопка-дубль: она открывает ту же страницу
+                /bookmarklet в <b>новой вкладке</b> И дополнительно показывает плавающую
+                подсказку «перетащи кнопку на панель закладок» (её можно закрыть крестиком
+                и запомнить выбор чекбоксом «больше не показывать»). Обе кнопки ведут на
+                установку букмарклета; разница — в новой вкладке и подсказке.</dd>
+
+            <dt>Куда вставлять однострочник вручную? (по браузерам)</dt>
+            <dd>
+                <p><b>Chrome</b> (и <b>Edge</b> на Chromium):</p>
+                <ol>
+                    <li>Показать панель закладок: Ctrl+Shift+B.</li>
+                    <li>Правый клик по панели → «Добавить страницу…» (Edge: «Добавить закладку…»).</li>
+                    <li>Имя: «Milkromug Capture»; в поле URL/Адрес вставить javascript:-строку.</li>
+                    <li>Сохранить — закладка появится на панели.</li>
+                </ol>
+                <p><b>Firefox</b>:</p>
+                <ol>
+                    <li>Показать панель закладок: Ctrl+Shift+B («Вид → Панели → Панель закладок»).</li>
+                    <li>Ctrl+D (Добавить закладку) → в поле «Адрес» вставить javascript:-строку.</li>
+                    <li>Имя «Milkromug Capture» → «Готово».</li>
+                </ol>
+                <p><b>Opera</b>:</p>
+                <ol>
+                    <li>Показать панель: Ctrl+Shift+B (Меню → Закладки).</li>
+                    <li>Меню → Закладки → «Добавить закладку…».</li>
+                    <li>В поле «URL» вставить javascript:-строку, сохранить.</li>
+                </ol>
+                <p><b>Safari</b>:</p>
+                <ol>
+                    <li>Настройки → «Дополнения»: включить «Показывать меню „Разработка“».</li>
+                    <li>Меню «Разработка» → «Показать страницу закладок» (или Cmd+Shift+2).</li>
+                    <li>Снизу «+» → двойной клик по новой закладке → вставить javascript:-строку в URL.</li>
+                    <li>Перетащить закладку на панель закладок.</li>
+                </ol>
+                <p><b>Яндекс.Браузер</b>:</p>
+                <ol>
+                    <li>Показать панель закладок: Ctrl+Shift+B.</li>
+                    <li>Правый клик по панели → «Добавить закладку…».</li>
+                    <li>В поле «Адрес» вставить javascript:-строку → «Готово».</li>
+                </ol>
+            </dd>
+
+            <dt>Что такое санитизация и зачем она при захвате?</dt>
+            <dd>Страницы чатов отдают сообщения вместе с кучей служебного HTML (стили,
+                скрипты). Санитизация отсекает этот мусор на сервере, иначе предпросмотр
+                и PDF забиваются CSS-правилами вместо текста разговора.</dd>
+        </dl>
+
+        <p><a th:href="@{/about(lang='ru')}" href="/about?lang=ru">← Об программе</a> ·
+           <a th:href="@{/bookmarklet}" href="/bookmarklet">Страница букмарклета →</a></p>
+    </div>
+
+    <!-- ==================== EN ==================== -->
+    <div th:if="${lang == 'en'}">
+        <h2>📖 Glossary &amp; FAQ for beginners</h2>
+
+        <h3>Glossary (terms and etymology)</h3>
+        <dl>
+            <dt>Bookmarklet</dt>
+            <dd>A blend of <i>bookmark</i> + <i>applet</i>: a browser bookmark whose URL is a
+                small JavaScript program. Clicking it runs the code inside the current page.
+                The Milkromug bookmarklet captures your AI chat and posts it to the local server.</dd>
+            <dt>Loader</dt>
+            <dd>A tiny bookmarklet that fetches the fresh capture code from
+                <code class="inline">http://localhost:8080/bookmarklet.js</code> on every click —
+                so the bookmark survives app updates without reinstallation.</dd>
+            <dt>Sanitization</dt>
+            <dd>From Latin <i>sanus</i>, "to make clean": stripping foreign tags, styles and
+                scripts out of captured HTML. Milkromug sanitizes with jsoup on the server, so
+                previews and PDFs contain readable messages, not CSS junk.</dd>
+            <dt>Repository</dt>
+            <dd>From Latin <i>repositorium</i>, "storage place": the project's source-code store
+                with full history (GitHub). The link is on the About page.</dd>
+            <dt>JSON</dt>
+            <dd>JavaScript Object Notation — a lightweight text data format used to transfer
+                and export chats.</dd>
+            <dt>curl</dt>
+            <dd>A command-line HTTP client ("Client URL"). Check the server with
+                <code class="inline">curl http://localhost:8080/</code>.</dd>
+            <dt>localhost</dt>
+            <dd>"This computer" (127.0.0.1). Milkromug listens on
+                <code class="inline">http://localhost:8080</code> only — your data never leaves
+                your machine.</dd>
+            <dt>Headless</dt>
+            <dd>Running without GUI/console (CI). In headless mode Milkromug does not wait for
+                Enter when the port is busy and exits with code 0.</dd>
+            <dt>Markdown</dt>
+            <dd>Lightweight text markup (<code class="inline">**bold**</code>,
+                <code class="inline"># heading</code>); available via
+                <code class="inline">/preview/{id}?format=md</code>.</dd>
+            <dt>DOM</dt>
+            <dd>Document Object Model — the tree of the open web page that JavaScript reads;
+                the bookmarklet extracts chat messages from it.</dd>
+            <dt>Selector</dt>
+            <dd>A short address of DOM nodes, e.g. <code class="inline">section.message &gt;
+                div.content</code>. Each supported chat site has its own precise selectors.</dd>
+            <dt>Shortcut</dt>
+            <dd>In Windows, a .lnk file linking to a program/page with its own hotkey
+                ("Milkromug Capture.lnk" on the desktop).</dd>
+            <dt>Hotkey</dt>
+            <dd>A keyboard combination for a quick command — Milkromug capture uses
+                <b>CTRL+SHIFT+G</b>.</dd>
+        </dl>
+
+        <h3>FAQ</h3>
+        <dl>
+            <dt>Why a bookmarklet — can't the app read other tabs by itself?</dt>
+            <dd>No: the browser's same-origin policy forbids one page from reading a tab on
+                another site. The only sanctioned way to run code inside the chat tab is a
+                bookmarklet click. No extension needed.</dd>
+            <dt>Do I have to reinstall the bookmark after updating the app?</dt>
+            <dd>No — drag the <b>loader</b> button once; it downloads the current capture code
+                from the local server on every click. The full legacy one-liner remains only as
+                an emergency fallback inside "Аварийный вариант"/details on /bookmarklet.</dd>
+            <dt>What is the difference between "Raise" and "Configure capture"?</dt>
+            <dd>Per the actual current code of the main page: "Configure capture"
+                (🔖 Настроить захват) is a plain link that opens /bookmarklet in the same tab;
+                "Raise" (🚀 Поднять) is a duplicate button that opens the same /bookmarklet page
+                in a NEW tab and additionally shows the floating drag-to-bookmarks-bar hint
+                (dismissable via its close button and the "don't show again" checkbox stored in
+                localStorage). Both lead to bookmarklet setup; the difference is the new tab
+                plus the hint.</dd>
+            <dt>Where do I paste the one-liner manually?</dt>
+            <dd>
+                <p><b>Chrome</b>: Ctrl+Shift+B to show the bookmarks bar → right-click the bar →
+                    "Add page…" → name "Milkromug Capture", paste the javascript: string into URL → Save.</p>
+                <p><b>Edge</b>: Ctrl+Shift+B → right-click the bar → "Add bookmark…" → paste the
+                    javascript: string into the Address field → Save.</p>
+                <p><b>Firefox</b>: Ctrl+Shift+B for the bookmarks toolbar → Ctrl+D → paste the
+                    javascript: string into the Address field → Done.</p>
+                <p><b>Opera</b>: Ctrl+Shift+B → Menu → Bookmarks → "Add bookmark…" → paste into URL.</p>
+                <p><b>Safari</b>: Settings → Advanced → show Develop menu → Develop → Show Bookmarks
+                    page → "+" → edit the new bookmark, paste the javascript: string into URL, drag to bar.</p>
+                <p><b>Yandex.Browser</b>: Ctrl+Shift+B → right-click the bar → "Add bookmark…" →
+                    paste into the Address field → Done.</p>
+            </dd>
+            <dt>What is sanitization and why does capture need it?</dt>
+            <dd>Chat pages ship messages wrapped in service HTML (styles, scripts). Server-side
+                sanitization strips that junk so previews and PDFs stay readable.</dd>
+        </dl>
+
+        <p><a th:href="@{/about(lang='en')}" href="/about?lang=en">← About</a> ·
+           <a th:href="@{/bookmarklet}" href="/bookmarklet">Bookmarklet page →</a></p>
+    </div>
+</main>
+</body>
+</html>
