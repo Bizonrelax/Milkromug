@@ -1,0 +1,44 @@
+ЗАЧЕМ: владелец протестировал релиз после PR #14 и нашёл шесть дыр: share.google/aimode всё ещё отдаёт CSS-мусор в предпросмотр (селекторы писались по догадке, живой трассировки не было); консольное окно мгновенно закрывается на сообщении PortGuard и выглядит как «нет реакции»; браузер не открывается сам без внятной диагностики; закладка-однострочник замерзает и требует переустановки после обновления; новичку негде прочитать, что такое букмарклет, санитизация и репозиторий, зачем букмарклет нужен, чем «Поднять» отличается от «Настроить захват» и куда вставлять однострочник в разных браузерах; баннер просит английскую шутку про лошадь. Закрываем всё одним прогоном с трассировкой живой страницы первым шагом.
+
+ЦЕЛЬ: захват share.google/aimode даёт читаемый чат без CSS/JS; консоль читаема человеком; браузер открывается сам или понятно говорит куда идти; закладка переживает обновления программы без переустановки; в программе и README есть глоссарий и FAQ; баннер шутит по-английски про лошадь.
+
+ГОТОВНОСТЬ:
+- POST фикстуры docs/prompts/fixtures/aimode-share.json (собрана из трассировки шага 1) на /chat, затем GET preview: grep -c "window._hst" = 0; grep -c ".fd1gae{" = 0; grep -c "DELL Laptop Warframe Performance - Google Search" >= 1 (первое пользовательское сообщение сохранено)
+- curl -s http://localhost:8080/bookmarklet | grep -c "loader" >= 1; href перетаскиваемой кнопки начинается с javascript: и содержит fetch("http://localhost:8080/bookmarklet.js", а не полный код захвата
+- curl -s -D - http://localhost:8080/bookmarklet.js | grep -i "access-control-allow-origin" -> содержит *
+- curl -s http://localhost:8080/glossary | grep -ci "букмарклет" >= 3; grep -ci "санитиз" >= 2; grep -ci "репозитор" >= 2; grep -ci "этимологи" >= 1
+- curl -s http://localhost:8080/glossary | grep -c "Chrome" >= 1; grep -c "Edge" >= 1; grep -c "Firefox" >= 1; grep -c "Safari" >= 1
+- запуск jar: первые строки баннера содержат "Yes, that" и "horse" (регистронезависимо), русских слов в баннере нет
+- второй запуск при занятом порту в среде с консолью: сообщение PortGuard напечатано И процесс ждёт нажатия Enter перед выходом (System.console() != null), в headless ожидания нет и код выхода 0
+- mvn -q test -> Failures: 0, Errors: 0
+- grep -n "Windows 11" README.md -> непусто
+
+КОНТЕКСТ: в main слиты PR #9-#14; маркеры канарейки ниже. Живая трассировка обязательна ПЕРЕД правкой селекторов: скачать curl -sL https://share.google/aimode/VmypreVTt3qAblJt1 в /workspace/aimode.html (если сеть контейнера не пускает — использовать приложенный владельцем дамп docs/prompts/fixtures/aimode-share-source.html, который он создаст из своего экспорта chat-b1c3fa43; файл-источник владелец положил в репозиторий заранее, проверь его наличие шагом 1). Изучить DOM: где лежат реальные реплики диалога, почему содержимое style/script стало «сообщениями» (вероятные виновники: контейнеры-обёртки с вложенными style, template-узлы, shadow-root, или эвристика повторяющихся контейнеров матчит служебные блоки). Вывод трассировки — три строки в отчёте: какой селектор берёт реплики, какой мусор матчился раньше, какое правило отсекает мусор. Селекторы share.google/aimode добавлять в ту же таблицу сайтов в bookmarklet.js, эвристику не переписывать. Лоадер-букмарклет: javascript-строка тянет свежий код с /bookmarklet.js через fetch и eval; сервер отдаёт bookmarklet.js с CORS * и без кэша (Cache-Control: no-store); полный старый однострочник оставить на странице /bookmarklet внутри details как аварийный вариант. Глоссарий: новая страница /glossary (RU+EN зеркала, ссылка из шапки index, about, bookmarklet): этимологии и простые определения терминов букмарклет, санитизация, репозиторий, JSON, curl, localhost, headless, markdown, DOM, селектор, ярлык, горячая клавиша; FAQ: зачем букмарклет и почему без него нельзя (браузер не даёт странице читать чужие вкладки), надо ли переустанавливать закладку после обновления (нет, с лоадером), чем «Поднять» отличается от «Настроить захват» (описать ФАКТИЧЕСКОЕ текущее поведение обеих кнопок после трассировки кода, не выдуманное), куда вставлять однострочник вручную в Chrome, Edge, Firefox, Opera, Safari, Яндекс (по 2-4 шага на браузер, включая как показать панель закладок). Баннер: вторая строка-таглайн заменить на "Run, mug, run! Fresh milk, fresh chat. (Yes, that's a horse :)" или эквивалент не шире 80 колонок с тем же смыслом, только английский. Console-wait: в PortGuard-пути и в фатальных ошибках старта после печати сообщения ждать Enter только если System.console() != null. BrowserAutoOpen: печатать в консоль результат ("Browser opened" / "Could not open browser automatically - go to http://localhost:8080") вместо молчания. README: секция Glossary & FAQ зеркалом /glossary (RU+EN) и строка о проверке на Windows 11 x64 (машина владельца) и windows-latest (CI).
+
+ОКРУЖЕНИЕ: [ -f /workspace/env.sh ] || cat > /workspace/env.sh <<'EOF'
+export JAVA_HOME=/opt/tools/jdk-21.0.13+9
+export PATH=$JAVA_HOME/bin:/opt/tools/apache-maven-3.9.6/bin:$PATH
+EOF
+source /workspace/env.sh; java -version -> 21; mvn -v -> 3.9.x
+
+ШАГИ:
+0. Канарейка: grep -q "hint-close" src/main/resources/templates/index.html && grep -q "format=md" src/main/resources/templates/chat-print.html && grep -q "win-console" .github/workflows/maven.yml -> все найдены. Иначе STOP и доклад.
+0.5. git fetch origin; git checkout -b ptabc-13 origin/main.
+1. Трассировка: проверить наличие docs/prompts/fixtures/aimode-share-source.html (дамп владельца); если нет -> STOP и доклад с просьбой к владельцу положить дамп. curl -sL живую ссылку в /workspace/aimode.html для сверки (необязательно успешно). Изучить оба DOM, сформулировать три строки вывода (селектор реплик, источник мусора, правило отсева). Без коммита.
+2. Тест раньше фикса: фикстура aimode-share.json из дампа (2-3 реплики + 2 служебных блока мусора); кейс в MilkromugApplicationTests: preview не содержит window._hst и .fd1gae{, содержит первую пользовательскую реплику. mvn -q test -Dtest=MilkromugApplicationTests -> новый кейс КРАСНЫЙ. Чек-поинт: git commit -m "test: reproduce aimode share junk in preview" и пуш.
+3. Микро-фикс селекторов: таблица сайтов в bookmarklet.js += share.google/aimode с селектором из трассировки; правило отсева мусора из трассировки (точечно, эвристику не переписывать). Повтор кейса -> зелёный. Чек-поинт: git commit -m "fix: aimode share selectors from live trace" и пуш.
+4. Лоадер-букмарклет: /bookmarklet.js отдаётся с Access-Control-Allow-Origin: * и Cache-Control: no-store; перетаскиваемая кнопка и textarea-однострочник на /bookmarklet заменяются на лоадер (fetch + eval), полный старый однострочник уходит в details "Аварийный вариант". Проверки ГОТОВНОСТИ про loader и CORS. Чек-поинт: git commit -m "feat: bookmarklet loader survives app updates" и пуш.
+5. Глоссарий и FAQ: шаблон glossary.html + маппинг /glossary (RU+EN), ссылки из шапок index/about/bookmarklet, содержимое из КОНТЕКСТА. Проверки ГОТОВНОСТИ про grep. Чек-поинт: git commit -m "feat: glossary and faq for beginners" и пуш.
+6. Баннер и консоль: таглайн баннера с английской шуткой про лошадь; Console-wait в PortGuard-пути; диагностика BrowserAutoOpen в консоль. Проверки ГОТОВНОСТИ про баннер и ожидание Enter. Чек-поинт: git commit -m "feat: horse joke tagline and readable console exits" и пуш.
+7. README: Glossary & FAQ (RU+EN зеркалом), строка Windows 11 x64 / windows-latest CI. Проверка ГОТОВНОСТИ про grep Windows 11. Чек-поинт: git commit -m "docs: glossary faq mirror and windows 11 note" и пуш.
+8. mvn clean install -> BUILD SUCCESS; все команды ГОТОВНОСТИ зелёные; локальный прогон: поднять jar, POST фикстуры aimode, GET preview, curl /glossary, /bookmarklet, баннер.
+9. Публикация: push ptabc-13, PR в main через API, мерж (владелец разрешил), git push origin --delete ptabc-13. Дождаться: CI на main green, ассет Release перезаписан.
+
+СТОП-ПРАВИЛА: красный после микро-фикса -> трассировка с печатью стадии в отчёт, архитектуру не менять; девиация от схемы -> стоп и доклад; около 3 вызовов до лимита -> WIP-коммит + REMAINING.md в коммите.
+
+ЗАПРЕТЫ: не переписывать эвристику fallback целиком; не трогать PortGuard-логику связывания порта (только печать и ожидание Enter); не трогать export-форматы из PR #14, print.css из PR #12, workflow maven.yml; не добавлять русский текст в баннер; не коммитить артефакты сборки и файлы runtime/JDK; не создавать no-op PR.
+
+ПРОТОКОЛ КОНЦА: отчёт не более 30 строк: таблица шаг->статус->хвост вывода, три строки трассировки из шага 1, хэши коммитов, долги. Последние две строки строго:
+СОСТОЯНИЕ: ЗЕЛЕНО|КРАСНО (tests: пройдено/всего, skipped Z)
+ВЕРДИКТ: ПУБЛИКОВАТЬ|НЕ ПУБЛИКОВАТЬ — причина не длиннее 10 слов.
+Плюс фраза чистого финиша: "Ветка удалена, PR смержен. Любые кнопки слияния или синхронизации, которые может показывать UI GitHub, недействительны и нажимать их не нужно".
