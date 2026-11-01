@@ -167,6 +167,56 @@ public class ChatController {
         return doc.body().html();
     }
 
+    /**
+     * Микро-фикс (промпт-13, трассировка share.google/aimode): сообщения-«реплики»
+     * чата AI Mode состоят из одного-двух плоских текстовых узлов (обычно это
+     * innerText блоков {@code <style>}/{@code <script>} живого чата). Настоящий ответ
+     * всегда содержит блочную разметку или markdown-блоки. Правило отсева: если после
+     * удаления служебных тегов от html-сообщения остаётся только текст без каких-либо
+     * сохранившихся тегов — это CSS/JS-мусор, сообщение выбрасывается из предпросмотра.
+     * Возвращает "" для «мусорного» html; для plain-text сообщений метод не применяется.
+     */
+    static String dropMarkuplessHtmlMessage(String text) {
+        if (text == null || text.isBlank()) {
+            return "";
+        }
+        Document doc = Jsoup.parseBodyFragment(text);
+        doc.select("style, script, noscript, svg, link, meta").remove();
+        // Если в исходном тексте нет ни одного тега (CSS-правила, JS-снаппеты),
+        // сообщение не является HTML-разметкой реплики — это мусор.
+        boolean hasTag = text.indexOf('<') >= 0 && !doc.body().children().isEmpty();
+        if (!hasTag) {
+            return "";
+        }
+        return doc.body().html();
+    }
+
+    /** true — если html-сообщение после зачистки не содержит никакой разметки (мусор). */
+    private static boolean isJunkHtmlMessage(String text) {
+        if (text == null || text.isBlank()) {
+            return false; // пустоту лечит прежняя логика, не отсев
+        }
+        Document doc = Jsoup.parseBodyFragment(text);
+        doc.select("style, script, noscript, svg, link, meta").remove();
+        boolean hasTag = text.indexOf('<') >= 0 && !doc.body().children().isEmpty();
+        return !hasTag;
+    }
+
+    /**
+     * Санитизированный html для сообщения с {@code html=true}: сначала вырезание
+     * служебных узлов и safelist, затем правило отсева мусора share.google/aimode
+     * (плоский CSS/JS без единого тега). ВНИМАНИЕ: порядок важен — markdown-рендер
+     * применяется только к НЕ мусорным сообщениям (иначе плоский JS-снаппет
+     * превратится в абзац текста).
+     */
+    private static String sanitizeHtmlMessage(String text) {
+        String sanitized = Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST);
+        if (isJunkHtmlMessage(text)) {
+            return "";
+        }
+        return renderMarkdownIfPlain(sanitized, text);
+    }
+
     /** Прогоняем все сообщения через jsoup-санитайзинг / экранирование. */
     private static ChatRequest sanitize(ChatRequest request) {
         ChatRequest copy = new ChatRequest();
@@ -178,9 +228,8 @@ public class ChatController {
                 clean.setAuthor(msg.getAuthor());
                 String text = msg.getText() == null ? "" : msg.getText();
                 if (msg.isHtml()) {
-                    String sanitized = Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST);
-                    // Микро-фикс B: html без блочных тегов — на самом деле markdown.
-                    clean.setText(renderMarkdownIfPlain(sanitized, text));
+                    // Промпт-13: html-мусор share.google/aimode (плоский CSS/JS) отсекается.
+                    clean.setText(sanitizeHtmlMessage(text));
                     clean.setHtml(true);
                 } else {
                     clean.setText(text);
@@ -209,9 +258,8 @@ public class ChatController {
                 String safeHtml;
                 boolean rawHtml;
                 if (msg.isHtml()) {
-                    safeHtml = Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST);
-                    // Микро-фикс B: html без блочных тегов — на самом деле markdown.
-                    safeHtml = renderMarkdownIfPlain(safeHtml, text);
+                    // Промпт-13: html-мусор share.google/aimode (плоский CSS/JS) отсекается.
+                    safeHtml = sanitizeHtmlMessage(text);
                     rawHtml = true;
                 } else {
                     // plain-text: рендерим markdown через commonmark (серверный рендер).
