@@ -79,7 +79,7 @@ Live pages: **http://localhost:8080/glossary** (RU) · http://localhost:8080/glo
 | **DOM** | Document Object Model — the tree of the open page that the bookmarklet reads messages from. |
 | **Selector** | A short address of DOM nodes, e.g. `section.message > div.content`; each supported chat site has its own precise selectors. |
 | **Shortcut** | Windows .lnk file linking to a program/page with its own hotkey ("Milkromug Capture.lnk"). |
-| **Hotkey** | Keyboard combination for a quick command — capture uses **CTRL+SHIFT+G**. |
+| **Hotkey** | Keyboard combination for a quick command — capture uses **CTRL+ALT+M**. |
 
 ### FAQ (EN)
 * **Why a bookmarklet?** The browser's same-origin policy forbids one page from reading a tab on another site; the only sanctioned way to run code inside the chat tab is a bookmarklet click. No extension needed.
@@ -102,7 +102,7 @@ Live pages: **http://localhost:8080/glossary** (RU) · http://localhost:8080/glo
 | **DOM** | «Дерево» открытой веб-страницы, из которого букмарклет читает реплики чата. |
 | **Селектор** | Короткий адрес узлов DOM, например `section.message > div.content`; для каждого сайта захвата подобраны свои точные селекторы. |
 | **Ярлык** | В Windows файл-ссылка (.lnk) на программу или страницу со своей горячей клавишей («Milkromug Capture.lnk»). |
-| **Горячая клавиша** | Комбинация клавиш для быстрой команды; у захвата Milkromug это **CTRL+SHIFT+G**. |
+| **Горячая клавиша** | Комбинация клавиш для быстрой команды; у захвата Milkromug это **CTRL+ALT+M**. |
 
 ### FAQ (RU)
 * **Зачем букмарклет и почему нельзя читать чужие вкладки без него?** Браузер запрещает одной странице читать вкладки с другим сайтом (same-origin). Единственный способ выполнить код внутри вкладки с чатом — клик по букмарклету. Расширения не нужно.
@@ -215,7 +215,7 @@ CI-конвейер (GitHub Actions, `windows-latest`) автоматическ�
 | **DOM** | «Дерево» открытой веб-страницы, из которого букмарклет читает реплики чата. |
 | **Селектор** | Короткий адрес узлов DOM, например `section.message > div.content`; для каждого сайта захвата подобраны свои точные селекторы. |
 | **Ярлык** | В Windows файл-ссылка (.lnk) на программу или страницу со своей горячей клавишей («Milkromug Capture.lnk»). |
-| **Горячая клавиша** | Комбинация клавиш для быстрой команды; у захвата Milkromug это **CTRL+SHIFT+G**. |
+| **Горячая клавиша** | Комбинация клавиш для быстрой команды; у захвата Milkromug это **CTRL+ALT+M**. |
 
 ### FAQ (RU)
 * **Зачем букмарклет и почему нельзя читать чужие вкладки без него?** Браузер запрещает одной странице читать вкладки с другим сайтом (same-origin). Единственный способ выполнить код внутри вкладки с чатом — клик по букмарклету. Расширения не нужно.
@@ -238,7 +238,7 @@ CI-конвейер (GitHub Actions, `windows-latest`) автоматическ�
 | **DOM** | Document Object Model — the tree of the open page that the bookmarklet reads messages from. |
 | **Selector** | A short address of DOM nodes, e.g. `section.message > div.content`; each supported chat site has its own precise selectors. |
 | **Shortcut** | Windows .lnk file linking to a program/page with its own hotkey ("Milkromug Capture.lnk"). |
-| **Hotkey** | Keyboard combination for a quick command — capture uses **CTRL+SHIFT+G**. |
+| **Hotkey** | Keyboard combination for a quick command — capture uses **CTRL+ALT+M**. |
 
 ### FAQ (EN)
 * **Why a bookmarklet?** The browser's same-origin policy forbids one page from reading a tab on another site; the only sanctioned way to run code inside the chat tab is a bookmarklet click. No extension needed.
