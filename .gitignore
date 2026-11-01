@@ -15,3 +15,7 @@ buildNumber.properties
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+
+# Случайно добавленные артефакты инструментов
+jdk-*/
+jdk21.tar.gz
