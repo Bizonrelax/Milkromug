@@ -76,6 +76,29 @@
        используются точные селекторы сообщений, для остальных — эвристика повторяющихся
        контейнеров. HTML sanitизируется на сервере (jsoup), страница чата не изменяется —
        только временный индикатор статуса.</p>
+
+    <h3>🖥 Горячая клавиша захвата (ярлык на рабочем столе)</h3>
+    <p>Нажмите кнопку — Milkromug создаст на рабочем столе файл
+       <b>Milkromug Capture.lnk</b> с горячей клавишей <b>CTRL+SHIFT+G</b>:
+       откройте чат, нажмите комбинацию — эта страница захватит чат одной кнопкой.</p>
+    <button type="button" id="desktopShortcutBtn" title="Создать на рабочем столе ярлык Milkromug Capture.lnk с горячей клавишей CTRL+SHIFT+G"
+            onclick="createDesktopShortcut(this)">⌨ Создать Ярлык</button>
+    <pre id="desktopShortcutResult" class="minified-box" style="min-height:0"></pre>
+
+    <script>
+        function createDesktopShortcut(btn) {
+            btn.disabled = true;
+            fetch('/desktop-shortcut', { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    document.getElementById('desktopShortcutResult').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(function (err) {
+                    document.getElementById('desktopShortcutResult').textContent = 'Ошибка: ' + err;
+                })
+                .finally(function () { btn.disabled = false; });
+        }
+    </script>
 </main>
 
 <script>

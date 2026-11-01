@@ -4,8 +4,22 @@
     <meta charset="UTF-8"/>
     <title th:text="${title}">Milkromug — печать чата</title>
     <link rel="stylesheet" th:href="@{/css/print.css}" href="/css/print.css"/>
+    <!-- Подсветка синтаксиса: офлайн-тема из webjars внутри jar (без CDN) -->
+    <link rel="stylesheet"
+          th:href="@{/webjars/highlightjs/11.11.1/styles/github.min.css}"
+          href="/webjars/highlightjs/11.11.1/styles/github.min.css"/>
     <!-- Спиннер шрифта интерфейса: применяем до отрисовки, без «прыжка» текста -->
     <script th:src="@{/js/ui-font.js}" src="/js/ui-font.js" defer></script>
+    <!-- highlight.js из webjar внутри jar: работает офлайн, без интернета -->
+    <script th:src="@{/webjars/highlightjs/11.11.1/highlight.min.js}"
+            src="/webjars/highlightjs/11.11.1/highlight.min.js" defer></script>
+    <script defer>
+        window.addEventListener('DOMContentLoaded', function () {
+            if (window.hljs && typeof hljs.highlightAll === 'function') {
+                hljs.highlightAll();
+            }
+        });
+    </script>
 </head>
 <body>
 

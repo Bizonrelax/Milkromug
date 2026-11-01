@@ -57,6 +57,30 @@
             <version>0.31.0</version>
         </dependency>
 
+        <!-- GFM-расширения markdown: таблицы, зачёркивания, авто-ссылки -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-gfm-tables</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-gfm-strikethrough</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-autolink</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+
+        <!-- Подсветка синтаксиса внутри jar (офлайн, без CDN) -->
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>highlightjs</artifactId>
+            <version>11.11.1</version>
+        </dependency>
+
         <!-- Работа с JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

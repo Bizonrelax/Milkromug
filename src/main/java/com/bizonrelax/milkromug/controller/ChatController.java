@@ -39,9 +39,10 @@ public class ChatController {
 
     /** Whitelist HTML-тегов, которые мы пропускаем в шаблон из входящего JSON. */
     private static final Safelist CHAT_SAFELIST = Safelist.relaxed()
-            .addTags("pre", "code", "kbd", "samp", "var")
+            .addTags("pre", "code", "kbd", "samp", "var", "del", "s", "strike")
             .addAttributes("pre", "class")
             .addAttributes("code", "class")
+            .addAttributes("table", "class")
             .preserveRelativeLinks(false);
 
     private final ChatStore chatStore;
@@ -218,10 +219,7 @@ public class ChatController {
      */
     static String renderMarkdownIfPlain(String sanitizedHtml, String text) {
         if (sanitizedHtml == null || sanitizedHtml.isBlank()) {
-            org.commonmark.parser.Parser parser = org.commonmark.parser.Parser.builder().build();
-            org.commonmark.renderer.html.HtmlRenderer renderer =
-                    org.commonmark.renderer.html.HtmlRenderer.builder().build();
-            String mdHtml = renderer.render(parser.parse(text == null ? "" : text));
+            String mdHtml = renderMarkdown(text == null ? "" : text);
             return Jsoup.clean(mdHtml, CHAT_SAFELIST);
         }
         Document parsed = Jsoup.parseBodyFragment(sanitizedHtml);
@@ -232,11 +230,27 @@ public class ChatController {
         if (hasBlock) {
             return sanitizedHtml;
         }
-        org.commonmark.parser.Parser parser = org.commonmark.parser.Parser.builder().build();
-        org.commonmark.renderer.html.HtmlRenderer renderer =
-                org.commonmark.renderer.html.HtmlRenderer.builder().build();
-        String mdHtml = renderer.render(parser.parse(text == null ? "" : text));
+        String mdHtml = renderMarkdown(text == null ? "" : text);
         return Jsoup.clean(mdHtml, CHAT_SAFELIST);
+    }
+
+    /**
+     * Markdown -> HTML с GFM-расширениями: таблицы, зачёркивания, авто-ссылки.
+     * Код в блоках ``` получает class="language-<язык>" для подсветки hljs.
+     */
+    static String renderMarkdown(String markdown) {
+        java.util.Collection<? extends org.commonmark.Extension> extensions = java.util.List.of(
+                org.commonmark.ext.gfm.tables.TablesExtension.create(),
+                org.commonmark.ext.gfm.strikethrough.StrikethroughExtension.create(),
+                org.commonmark.ext.autolink.AutolinkExtension.create());
+        org.commonmark.parser.Parser parser = org.commonmark.parser.Parser.builder()
+                .extensions(extensions)
+                .build();
+        org.commonmark.renderer.html.HtmlRenderer renderer =
+                org.commonmark.renderer.html.HtmlRenderer.builder()
+                        .extensions(extensions)
+                        .build();
+        return renderer.render(parser.parse(markdown));
     }
 
     /**
