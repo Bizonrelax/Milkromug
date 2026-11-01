@@ -46,6 +46,16 @@
             title="Открыть печать браузера и сохранить чат в PDF">
         💾 Сохранить в PDF
     </button>
+
+    <!-- Кнопки скачивания в текстовых форматах (промпт-12): скрыты при печати -->
+    <a class="download-btn no-print" th:href="'?format=md'"
+       href="?format=md" title="Скачать чат в формате Markdown (.md)">⬇ Скачать .md</a>
+    <a class="download-btn no-print" th:href="'?format=html'"
+       href="?format=html" title="Скачать автономный HTML-файл (.html), открывается офлайн">⬇ Скачать .html</a>
+    <a class="download-btn no-print" th:href="'?format=txt'"
+       href="?format=txt" title="Скачать простой текст без разметки (.txt)">⬇ Скачать .txt</a>
+    <a class="download-btn no-print" th:href="'?format=json'"
+       href="?format=json" title="Скачать исходный JSON-файл чата (.json)">⬇ Скачать .json</a>
 </header>
 
 <!-- Печатная область -->
