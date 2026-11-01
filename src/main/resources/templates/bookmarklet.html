@@ -54,6 +54,14 @@
 <main id="howto">
     <h2>🔖 Milkromug Capture — захват чата из браузера одним кликом</h2>
 
+    <!-- Микро-фикс B (промпт-11): закрываемая подсказка про перетаскивание -->
+    <div class="capture-tip" id="raise-hint">
+        <button type="button" id="hint-close" title="Закрыть подсказку" aria-label="Закрыть подсказку">&#10005;</button>
+        💡 Кнопку ниже нужно <b>перетащить мышью</b> на панель закладок браузера —
+        а затем открыть страницу чата и кликнуть по закладке.
+        <label class="tip-dismiss"><input type="checkbox" id="hint-dontshow"/> больше не показывать</label>
+    </div>
+
     <p>Перетащите кнопку ниже на панель закладок браузера (или создайте закладку
        и вставьте ссылку из поля под кнопкой вручную):</p>
 
@@ -111,6 +119,29 @@
 </main>
 
 <script>
+    // Микро-фикс B (промпт-11): подсказка закрываема крестиком #hint-close,
+    // чекбокс «больше не показывать» запоминается в localStorage,
+    // автоскрытие после успешного захвата (событие milkromug-captured).
+    (function () {
+        const hint = document.getElementById('raise-hint');
+        const closeBtn = document.getElementById('hint-close');
+        const dontShow = document.getElementById('hint-dontshow');
+        const HINT_KEY = 'milkromug-hint-dismissed';
+        if (localStorage.getItem(HINT_KEY) === '1') {
+            hint.style.display = 'none';
+        }
+        closeBtn.addEventListener('click', function () {
+            if (dontShow.checked) localStorage.setItem(HINT_KEY, '1');
+            hint.style.display = 'none';
+        });
+        dontShow.addEventListener('change', function () {
+            if (dontShow.checked) localStorage.setItem(HINT_KEY, '1');
+        });
+        window.addEventListener('milkromug-captured', function () {
+            hint.style.display = 'none';
+        });
+    })();
+
     // Кнопка-закладка не должна вести по javascript:-ссылке при клике НА ЭТОЙ странице
     // (там нет чата для захвата) — подсказываем, что её надо перетаскивать.
     document.getElementById('captureLink').addEventListener('click', function (e) {
