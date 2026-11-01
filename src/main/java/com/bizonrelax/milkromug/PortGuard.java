@@ -82,7 +82,10 @@ final class PortGuard {
      */
     static void waitForEnterIfConsole() {
         if (System.console() != null) {
-            System.out.println("Нажмите Enter для выхода / Press Enter to exit...");
+            // Промпт-13: читаемая консоль — разделитель и понятная подсказка.
+            System.out.println("------------------------------------------------------------");
+            System.out.println("Milkromug работает. Чтобы остановить — нажмите Enter.");
+            System.out.println("(To stop Milkromug, press Enter.)");
             System.out.flush();
             System.console().readLine();
         }
