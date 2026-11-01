@@ -36,15 +36,18 @@ class Prompt13Test {
                 java.nio.charset.StandardCharsets.UTF_8);
         String body = mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
+                        // без Accept контроллер считает запрос браузерным и рендерит HTML;
+                        // букмарклет присылает Accept: application/json — воспроизводим это.
+                        .header("Accept", MediaType.APPLICATION_JSON_VALUE)
                         .content(fixture))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        String id = body.replaceAll(".*\"id\":\"([^\"]+)\".*", "$1");
-        // id может содержать [[...]] — для MockMvc это синтаксис uri template
-        // variables, поэтому экранируем квадратные скобки percent-encoding'ом.
-        String encodedId = java.net.URLEncoder.encode(id, java.nio.charset.StandardCharsets.UTF_8)
-                .replace("[", "%5B").replace("]", "%5D");
-        String preview = mockMvc.perform(get("/preview/" + encodedId))
+                .andReturn().getResponse().getContentAsString(
+                        java.nio.charset.StandardCharsets.UTF_8);
+        // id — UUID без спецсимволов; берём поле "id" из JSON ответа.
+        String id = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*\"([^\"]+)\"")
+                .matcher(body).results().map(m -> m.group(1)).findFirst()
+                .orElseThrow(() -> new AssertionError("no id in response: " + body));
+        String preview = mockMvc.perform(get("/preview/{id}", id))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         assertThat(preview).doesNotContain("window._hst");

@@ -224,10 +224,12 @@ public class ChatController {
      * превратится в абзац текста).
      */
     private static String sanitizeHtmlMessage(String text) {
-        String sanitized = Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST);
+        // Порядок важен: мусор отсекаем ДО Jsoup.clean — иначе плоский CSS
+        // переживает safelist как текст и попадает в предпросмотр.
         if (isJunkHtmlMessage(text)) {
             return "";
         }
+        String sanitized = Jsoup.clean(stripServiceNodes(text), CHAT_SAFELIST);
         return renderMarkdownIfPlain(sanitized, text);
     }
 
