@@ -140,6 +140,37 @@ class MilkromugApplicationTests {
     }
 
     @Test
+    void aimodeSharePreviewHasNoCssJunkAndKeepsFirstUserMessage() throws Exception {
+        // Фикстура docs/prompts/fixtures/aimode-share.json собрана из трассировки
+        // дампа share.google/aimode: 1 реальная пользовательская реплика +
+        // 2 служебных блока мусора (JS-снаппет window._hst и CSS-блок .fd1gae{...).
+        String fixture;
+        try (java.io.InputStream in = new java.io.FileInputStream("docs/prompts/fixtures/aimode-share.json")) {
+            fixture = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        MvcResult result = mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(fixture))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"id\":")))
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        String id = json.replaceAll(".*\"id\":\"([^\"]+)\".*", "$1");
+
+        String page = mockMvc.perform(get("/preview/" + id))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+        // CSS/JS-мусор share.google/aimode не должен попадать в предпросмотр
+        assertThat(countOccurrences(page, "window._hst")).isZero();
+        assertThat(countOccurrences(page, ".fd1gae{")).isZero();
+        // Первое пользовательское сообщение сохранено
+        assertThat(page).contains("DELL Laptop Warframe Performance - Google Search");
+    }
+
+    @Test
     void previewUnknownIdReturnsFriendlyNotFound() throws Exception {
         mockMvc.perform(get("/preview/no-such-id"))
                 .andExpect(status().isNotFound())
