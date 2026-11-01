@@ -182,6 +182,13 @@ pre code {
         padding: 0;
         box-shadow: none;
         border-radius: 0;
+        /* Микро-фикс D (промпт-11): страховка от пустой первой страницы —
+           экранные min-height/min-block-size простыни не должны тянуться
+           в печать; сообщения allow рвутся постранично. */
+        min-height: 0;
+        min-block-size: 0;
+        break-inside: auto;
+        page-break-inside: auto;
     }
 
     /* Код остаётся моноширинным и при печати */
