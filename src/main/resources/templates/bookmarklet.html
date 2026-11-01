@@ -23,6 +23,15 @@
         .minified-box { width: 100%; min-height: 110px; font-family: monospace; font-size: 11px; }
         .steps li { margin-bottom: 8px; }
         code.inline { background: #f0e9e2; padding: 2px 6px; border-radius: 6px; }
+        /* Микро-фикс B (промпт-11): закрываемая подсказка про перетаскивание */
+        .capture-tip { position: relative; max-width: 720px; background: #fffdf5;
+            border: 2px solid #d9c9a3; border-radius: 12px; padding: 14px 40px 14px 16px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .1); line-height: 1.5; }
+        #hint-close { position: absolute; top: 6px; right: 8px; border: none;
+            background: transparent; font-size: 1.2em; line-height: 1; cursor: pointer;
+            color: #7a6c4f; }
+        #hint-close:hover { color: #000; }
+        .tip-dismiss { display: block; margin-top: 8px; font-size: .9em; color: #4a3f2a; }
     </style>
 </head>
 <body>
