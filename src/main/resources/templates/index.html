@@ -83,6 +83,21 @@
         .quickstart-btn:hover { background: #7d5c44; }
         .quickstart-btn.alt { background: #4a7ba6; }
         .quickstart-btn.alt:hover { background: #5b8db8; }
+        /* Микро-фикс B (промпт-11): закрываемость подсказки о перетаскивании */
+        .raise-tip { padding-right: 40px; }
+        #hint-close {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            border: none;
+            background: transparent;
+            font-size: 1.2em;
+            line-height: 1;
+            cursor: pointer;
+            color: #7a6c4f;
+        }
+        #hint-close:hover { color: #000; }
+        .tip-dismiss { display: block; margin-top: 8px; font-size: .9em; color: #4a3f2a; }
     </style>
 </head>
 <body>
@@ -127,11 +142,13 @@
             <span class="raise-wrap">
                 <button type="button" class="raise-btn" id="raiseBtn" title="Открыть страницу установки букмарклета Milkromug Capture">🚀 Поднять</button>
                 <span class="raise-tip no-print" id="raiseTip" hidden>
+                    <button type="button" id="hint-close" title="Закрыть подсказку" aria-label="Закрыть подсказку">&#10005;</button>
                     ↖ <b>Перетащи</b> кнопку <b>«Milkromug Capture»</b> на панель закладок
                     браузера — это нужно сделать <b>только один раз</b>.<br/>
                     Браузеры <b>запрещают программам создавать закладки</b> — это требование
                     безопасности, поэтому автоустановка невозможна и подсказка обязательна.
                     После перетаскивания просто кликай по закладке в любом чате с ИИ.
+                    <label class="tip-dismiss"><input type="checkbox" id="hint-dontshow"/> больше не показывать</label>
                 </span>
             </span>
             <button type="button" class="demo-btn" id="demoChatBtn" title="Загрузить пример захваченного чата без curl и настроек">💬 Демо-чат без curl</button>
@@ -192,12 +209,35 @@
     // «Поднять»: открыть страницу букмарклета в новой вкладке + показать
     // плавающую подсказку про перетаскивание (браузеры запрещают создавать
     // закладки программно — объясняем это пользователю).
+    // Микро-фикс B (промпт-11): подсказка закрываема крестиком #hint-close,
+    // чекбокс «больше не показывать» запоминается в localStorage, а при
+    // успешном захвате (демо-чат или событие milkromug-captured) подсказка
+    // скрывается автоматически.
     const raiseBtn = document.getElementById('raiseBtn');
     const raiseTip = document.getElementById('raiseTip');
+    const hintClose = document.getElementById('hint-close');
+    const hintDontShow = document.getElementById('hint-dontshow');
+    const HINT_KEY = 'milkromug-hint-dismissed';
+
+    function hideRaiseTip() { raiseTip.hidden = true; }
+
     raiseBtn.addEventListener('click', function () {
         window.open('/bookmarklet', '_blank');
-        raiseTip.hidden = false;
+        if (localStorage.getItem(HINT_KEY) !== '1') {
+            raiseTip.hidden = false;
+        }
     });
+
+    hintClose.addEventListener('click', function () {
+        if (hintDontShow.checked) localStorage.setItem(HINT_KEY, '1');
+        hideRaiseTip();
+    });
+    hintDontShow.addEventListener('change', function () {
+        if (hintDontShow.checked) localStorage.setItem(HINT_KEY, '1');
+        else localStorage.removeItem(HINT_KEY);
+    });
+    // автоскрытие после успешного захвата (вклад с демо-чата ниже шлёт событие)
+    window.addEventListener('milkromug-captured', hideRaiseTip);
 
     // Демо-чат: шлём POST демо-JSON на /chat и открываем url из ответа.
     const demoBtn = document.getElementById('demoChatBtn');
@@ -217,6 +257,8 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data && data.url) {
+                    // успешный захват — подсказка больше не нужна
+                    window.dispatchEvent(new Event('milkromug-captured'));
                     window.open(data.url, '_blank');
                 } else {
                     alert('Milkromug не вернул ссылку на предпросмотр.');

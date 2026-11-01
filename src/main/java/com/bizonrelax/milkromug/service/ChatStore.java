@@ -1,8 +1,11 @@
 package com.bizonrelax.milkromug.service;
 
 import com.bizonrelax.milkromug.model.ChatRequest;
+import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,9 +42,46 @@ public class ChatStore {
     /** Сохраняет чат и возвращает назначенный ему UUID-ключ. */
     public String save(String title, ChatRequest request) {
         String id = UUID.randomUUID().toString();
-        chats.put(id, new StoredChat(id, title, request, sequenceCounter.incrementAndGet()));
+        chats.put(id, new StoredChat(id, title, dedupeConsecutive(request), sequenceCounter.incrementAndGet()));
         evictOldestIfNeeded();
         return id;
+    }
+
+    /**
+     * Микро-фикс C (промпт-11): серверная страховка от дубликатов — DOM
+     * chat.qwen.ai вкладывает контейнеры сообщений друг в друга, из-за чего
+     * селектор букмарклета матчит один и тот же текст несколько раз подряд.
+     * Отбрасываем сообщение, равное предыдущему по нормализованному тексту
+     * (HTML вырезается до plain-text, пробельные символы схлопываются).
+     * Возвращается копия запроса — входной объект не мутируется.
+     */
+    static ChatRequest dedupeConsecutive(ChatRequest request) {
+        if (request == null || request.getMessages() == null) {
+            return request;
+        }
+        List<ChatRequest.Message> kept = new ArrayList<>();
+        String previousNormalized = null;
+        for (ChatRequest.Message msg : request.getMessages()) {
+            String normalized = normalizeText(msg == null ? null : msg.getText());
+            if (previousNormalized != null && previousNormalized.equals(normalized)) {
+                continue; // подряд идущий дубликат — пропускаем
+            }
+            kept.add(msg);
+            previousNormalized = normalized;
+        }
+        ChatRequest copy = new ChatRequest();
+        copy.setTitle(request.getTitle());
+        copy.setMessages(kept);
+        return copy;
+    }
+
+    /** Нормализация текста сообщения для сравнения подряд идущих дубликатов. */
+    private static String normalizeText(String text) {
+        if (text == null) {
+            return "";
+        }
+        String plain = Jsoup.parseBodyFragment(text).body().text();
+        return plain.replaceAll("\\s+", " ").trim();
     }
 
     public Optional<StoredChat> find(String id) {
