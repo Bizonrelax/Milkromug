@@ -12,13 +12,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 /**
- * «Запустил и пользуешься»: после готовности сервера автоматически
- * открывает дашборд http://localhost:PORT/ в браузере по умолчанию.
+ * Opens the dashboard http://localhost:PORT/ in the default browser
+ * after the server is ready ("run it and use it").
  *
- * Охрана (guard):
- *  - headless-режим (нет GUI / java.awt.headless=true) — пропускаем;
- *  - аргумент командной строки --no-open — пропускаем;
- *  - любое исключение при открытии логируется, приложение НЕ падает.
+ * Guards:
+ *  - headless mode (no GUI / java.awt.headless=true) - skipped;
+ *  - command-line argument --no-open - skipped;
+ *  - any exception during opening is logged, the app does NOT crash.
  */
 @Component
 public class BrowserAutoOpen implements ApplicationListener<ApplicationReadyEvent> {
@@ -49,24 +49,24 @@ public class BrowserAutoOpen implements ApplicationListener<ApplicationReadyEven
         if (Boolean.getBoolean("java.awt.headless")
                 || !Desktop.isDesktopSupported()
                 || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            log.info("Автооткрытие браузера пропущено: headless или нет Desktop.Browse.");
+            log.info("Browser auto-open skipped: headless or Desktop.Browse is not supported.");
             return;
         }
         if (isNoOpenRequested()) {
-            log.info("Автооткрытие браузера пропущено: передан аргумент --no-open.");
+            log.info("Browser auto-open skipped: --no-open argument was passed.");
             return;
         }
         int port = environment.getProperty("server.port", Integer.class, 8080);
         String url = "http://localhost:" + port + "/";
         try {
             Desktop.getDesktop().browse(new URI(url));
-            // Промпт-13: диагностика вместо молчания — печатаем результат в консоль.
+            // Prompt-13/Prompt-14: diagnostics instead of silence - English only (no mojibake).
             System.out.println("Browser opened: " + url);
-            log.info("Дашборд открыт в браузере: {}", url);
+            log.info("Browser opened in default OS browser: {}", url);
         } catch (Exception e) {
             System.out.println("Could not open browser automatically - go to http://localhost:" + port);
-            log.warn("Не удалось открыть браузер автоматически ({}). Откройте {} вручную.",
-                    e.getMessage(), url);
+            log.warn("Browser open skipped: could not open browser automatically ({})."
+                    + " Open {} manually.", e.getMessage(), url);
         }
     }
 }

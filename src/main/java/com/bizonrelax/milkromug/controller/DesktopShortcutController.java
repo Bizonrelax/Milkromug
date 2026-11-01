@@ -12,17 +12,20 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * POST /desktop-shortcut — создаёт на рабочем столе Windows ярлык
- * «Milkromug Capture.lnk» (через PowerShell + WScript.Shell) с горячей
- * клавишей CTRL+SHIFT+G, открывающий http://localhost:8080/bookmarklet.
- * На не-Windows и в headless отвечает дружелюбный JSON {ok:false} без 500.
+ * POST /desktop-shortcut - creates a real Windows shell shortcut
+ * "Milkromug.lnk" on the Desktop (via PowerShell + WScript.Shell) with
+ * TargetPath = http://localhost:8080/bookmarklet and Hotkey = CTRL+ALT+M.
+ * Prompt-14: a .lnk opens the URL in the default browser (a dragged
+ * javascript: one-liner cannot be a desktop shortcut), and CTRL+ALT+M is free
+ * system-wide (the previous combination was busy in Chrome). On non-Windows
+ * and in headless mode responds with a friendly JSON {ok:false}, never a 500.
  */
 @RestController
 public class DesktopShortcutController {
 
-    private static final String SHORTCUT_NAME = "Milkromug Capture.lnk";
+    private static final String SHORTCUT_NAME = "Milkromug.lnk";
     private static final String TARGET_URL = "http://localhost:8080/bookmarklet";
-    private static final String HOTKEY = "CTRL+SHIFT+G";
+    private static final String HOTKEY = "CTRL+ALT+M";
 
     @PostMapping(value = "/desktop-shortcut", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> createShortcut() {
@@ -32,21 +35,21 @@ public class DesktopShortcutController {
 
         if (!os.contains("win")) {
             response.put("ok", false);
-            response.put("error", "Ярлык рабочего стола доступен только на Windows"
-                    + " (сейчас: " + os + "). Горячая клавиша " + HOTKEY
-                    + " появится после запуска Milkromug.exe на Windows.");
+            response.put("error", "Desktop shortcut is only available on Windows"
+                    + " (current OS: " + os + "). The hotkey " + HOTKEY
+                    + " will work after running Milkromug.exe on Windows.");
             return response;
         }
         if (headless) {
             response.put("ok", false);
-            response.put("error", "Сервер запущен в headless-режиме — рабочий стол недоступен."
-                    + " Запустите Milkromug.exe обычным двойным кликом.");
+            response.put("error", "Server runs in headless mode - no desktop available."
+                    + " Start Milkromug.exe with a normal double click.");
             return response;
         }
 
         Path desktop = Path.of(System.getProperty("user.home"), "Desktop");
         Path lnk = desktop.resolve(SHORTCUT_NAME);
-        // PS1-скрипт WScript.Shell по сниппету владельца: TargetPath/Hotkey задаются локально.
+        // PS1 snippet via WScript.Shell per owner's note: TargetPath/Hotkey set locally.
         String ps = "$ws = New-Object -ComObject WScript.Shell;"
                 + " $s = $ws.CreateShortcut('" + lnk.toString().replace("'", "''") + "');"
                 + " $s.TargetPath = '" + TARGET_URL + "';"
@@ -63,10 +66,11 @@ public class DesktopShortcutController {
             if (code == 0 && Files.exists(lnk)) {
                 response.put("ok", true);
                 response.put("path", lnk.toString());
+                response.put("target", TARGET_URL);
                 response.put("hotkey", HOTKEY);
             } else {
                 response.put("ok", false);
-                response.put("error", "PowerShell завершился с кодом " + code
+                response.put("error", "PowerShell exited with code " + code
                         + ": " + out.trim());
             }
         } catch (IOException | InterruptedException e) {
@@ -74,7 +78,7 @@ public class DesktopShortcutController {
                 Thread.currentThread().interrupt();
             }
             response.put("ok", false);
-            response.put("error", "Не удалось создать ярлык: " + e.getMessage());
+            response.put("error", "Could not create the desktop shortcut: " + e.getMessage());
         }
         return response;
     }

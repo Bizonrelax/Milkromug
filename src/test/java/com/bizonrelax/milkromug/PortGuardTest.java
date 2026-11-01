@@ -28,13 +28,15 @@ class PortGuardTest {
     }
 
     @Test
-    void russianMessageForRussianLocale() {
+    void englishMessageForRussianLocaleToo() {
         Locale previous = Locale.getDefault();
         try {
             Locale.setDefault(Locale.forLanguageTag("ru-RU"));
             String message = PortGuard.alreadyRunningMessage(8080);
+            // Prompt-14: diagnostics are English-only regardless of locale (no mojibake).
             assertThat(message)
-                    .contains("Milkromug уже запущен")
+                    .contains("Milkromug is already running")
+                    .doesNotContain("уже запущен")
                     .contains("http://localhost:8080")
                     .contains("taskkill /IM Milkromug.exe /F");
         } finally {
