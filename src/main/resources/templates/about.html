@@ -21,23 +21,25 @@
 
     <!-- Спиннер №1: размер шрифта ПЕЧАТНОГО чата (здесь не используется, спиннеры обязательны) -->
     <label for="fontSpinner">Шрифт чата:</label>
-    <input type="number" id="fontSpinner" name="fontSpinner" min="8" max="24" step="1" value="12"/>
+    <input type="number" id="fontSpinner" name="fontSpinner" min="8" max="24" step="1" value="12"
+           title="Размер шрифта печатного чата в пунктах (8–24)"/>
     <span class="hint">pt (8–24)</span>
 
     <!-- Спиннер №2: размер шрифта ИНТЕРФЕЙСА: 10..22 px, localStorage -->
     <label for="uiFontSpinner">Шрифт UI:</label>
-    <input type="number" id="uiFontSpinner" name="uiFontSpinner" min="10" max="22" step="1" value="16"/>
+    <input type="number" id="uiFontSpinner" name="uiFontSpinner" min="10" max="22" step="1" value="16"
+           title="Размер шрифта интерфейса в пикселях (10–22), сохраняется в браузере"/>
     <span class="hint">px (10–22)</span>
 
-    <button type="button" id="savePdfBtn" onclick="window.print()">💾 Сохранить в PDF</button>
+    <button type="button" id="savePdfBtn" onclick="window.print()" title="Открыть печать браузера и сохранить страницу в PDF">💾 Сохранить в PDF</button>
 </header>
 
 <main class="about-content">
     <p class="lang-switch no-print">
         Язык:
-        <a th:href="@{/about(lang='ru')}" href="/about?lang=ru">RU</a> ·
-        <a th:href="@{/about(lang='en')}" href="/about?lang=en">EN</a> ·
-        <a th:href="@{/}" href="/">← Главная</a>
+        <a th:href="@{/about(lang='ru')}" href="/about?lang=ru" title="Читать на русском языке">RU</a> ·
+        <a th:href="@{/about(lang='en')}" href="/about?lang=en" title="Read in English">EN</a> ·
+        <a th:href="@{/}" href="/" title="Вернуться на главный дашборд Milkromug">← Главная</a>
     </p>
 
     <!-- ==================== RU ==================== -->

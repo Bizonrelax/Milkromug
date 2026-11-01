@@ -4,8 +4,22 @@
     <meta charset="UTF-8"/>
     <title th:text="${title}">Milkromug — печать чата</title>
     <link rel="stylesheet" th:href="@{/css/print.css}" href="/css/print.css"/>
+    <!-- Подсветка синтаксиса: офлайн-тема из webjars внутри jar (без CDN) -->
+    <link rel="stylesheet"
+          th:href="@{/webjars/highlightjs/11.11.1/styles/github.min.css}"
+          href="/webjars/highlightjs/11.11.1/styles/github.min.css"/>
     <!-- Спиннер шрифта интерфейса: применяем до отрисовки, без «прыжка» текста -->
     <script th:src="@{/js/ui-font.js}" src="/js/ui-font.js" defer></script>
+    <!-- highlight.js из webjar внутри jar: работает офлайн, без интернета -->
+    <script th:src="@{/webjars/highlightjs/11.11.1/highlight.min.js}"
+            src="/webjars/highlightjs/11.11.1/highlight.min.js" defer></script>
+    <script defer>
+        window.addEventListener('DOMContentLoaded', function () {
+            if (window.hljs && typeof hljs.highlightAll === 'function') {
+                hljs.highlightAll();
+            }
+        });
+    </script>
 </head>
 <body>
 
@@ -17,16 +31,19 @@
     <label for="fontSpinner">Шрифт чата:</label>
     <input type="number" id="fontSpinner" name="fontSpinner"
            min="8" max="24" step="1"
+           title="Размер шрифта печатного чата в пунктах (8–24)"
            th:value="${fontSize}" value="12"/>
     <span class="hint">pt (8–24)</span>
 
     <!-- Спиннер №2: размер шрифта ИНТЕРФЕЙСА: 10..22 px, localStorage -->
     <label for="uiFontSpinner">Шрифт UI:</label>
     <input type="number" id="uiFontSpinner" name="uiFontSpinner"
-           min="10" max="22" step="1" value="16"/>
+           min="10" max="22" step="1" value="16"
+           title="Размер шрифта интерфейса в пикселях (10–22), сохраняется в браузере"/>
     <span class="hint">px (10–22)</span>
 
-    <button type="button" id="savePdfBtn" onclick="window.print()">
+    <button type="button" id="savePdfBtn" onclick="window.print()"
+            title="Открыть печать браузера и сохранить чат в PDF">
         💾 Сохранить в PDF
     </button>
 </header>

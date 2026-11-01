@@ -67,6 +67,22 @@
             transform: rotate(45deg);
         }
         .actions-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 20px 0; }
+        /* Быстрый старт: две большие кнопки-ссылки для новичка */
+        .quickstart-row { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; }
+        .quickstart-btn {
+            display: inline-block;
+            padding: 18px 32px;
+            border-radius: 14px;
+            background: #6b4f3a;
+            color: #fff !important;
+            font-weight: 700;
+            font-size: 1.15em;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+        }
+        .quickstart-btn:hover { background: #7d5c44; }
+        .quickstart-btn.alt { background: #4a7ba6; }
+        .quickstart-btn.alt:hover { background: #5b8db8; }
     </style>
 </head>
 <body>
@@ -77,16 +93,19 @@
     <label for="fontSpinner">Шрифт чата:</label>
     <input type="number" id="fontSpinner" name="fontSpinner"
            min="8" max="24" step="1"
+           title="Размер шрифта печатного чата в пунктах (8–24)"
            th:value="${fontSize}" value="12"/>
     <span class="hint">pt (8–24)</span>
 
     <!-- Спиннер №2: размер шрифта ИНТЕРФЕЙСА: 10..22 px, localStorage -->
     <label for="uiFontSpinner">Шрифт UI:</label>
     <input type="number" id="uiFontSpinner" name="uiFontSpinner"
-           min="10" max="22" step="1" value="16"/>
+           min="10" max="22" step="1" value="16"
+           title="Размер шрифта интерфейса в пикселях (10–22), сохраняется в браузере"/>
     <span class="hint">px (10–22)</span>
 
-    <button type="button" id="savePdfBtn" onclick="window.print()">
+    <button type="button" id="savePdfBtn" onclick="window.print()"
+            title="Открыть печать браузера и сохранить чат в PDF">
         💾 Сохранить в PDF
     </button>
 </header>
@@ -96,9 +115,17 @@
     <section class="howto no-print" style="max-width:720px;margin:24px auto;font-size:16px;line-height:1.6">
         <h2 style="margin-bottom:12px">☕ Как пользоваться</h2>
 
+        <!-- Быстрый старт: две большие кнопки -->
+        <div class="quickstart-row">
+            <a class="quickstart-btn" th:href="@{/bookmarklet}" href="/bookmarklet"
+               title="Открыть страницу установки букмарклета Milkromug Capture">🔖 Настроить захват</a>
+            <a class="quickstart-btn alt" th:href="@{/about}" href="/about"
+               title="Узнать, что умеет Milkromug и как он устроен">ℹ️ О программе</a>
+        </div>
+
         <div class="actions-row">
             <span class="raise-wrap">
-                <button type="button" class="raise-btn" id="raiseBtn">🚀 Поднять</button>
+                <button type="button" class="raise-btn" id="raiseBtn" title="Открыть страницу установки букмарклета Milkromug Capture">🚀 Поднять</button>
                 <span class="raise-tip no-print" id="raiseTip" hidden>
                     ↖ <b>Перетащи</b> кнопку <b>«Milkromug Capture»</b> на панель закладок
                     браузера — это нужно сделать <b>только один раз</b>.<br/>
@@ -107,14 +134,14 @@
                     После перетаскивания просто кликай по закладке в любом чате с ИИ.
                 </span>
             </span>
-            <button type="button" class="demo-btn" id="demoChatBtn">💬 Демо-чат без curl</button>
+            <button type="button" class="demo-btn" id="demoChatBtn" title="Загрузить пример захваченного чата без curl и настроек">💬 Демо-чат без curl</button>
         </div>
 
         <p class="big-link">
             🔖 Страница букмарклета:
-            <a th:href="@{/bookmarklet}" href="/bookmarklet">/bookmarklet</a>
+            <a th:href="@{/bookmarklet}" href="/bookmarklet" title="Страница установки букмарклета Milkromug Capture">/bookmarklet</a>
             &nbsp;·&nbsp;
-            <a th:href="@{/about}" href="/about">Об программе / About</a>
+            <a th:href="@{/about}" href="/about" title="Что умеет Milkromug и как он устроен">Об программе / About</a>
         </p>
 
         <ol style="padding-left:24px">
