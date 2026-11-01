@@ -2,7 +2,7 @@ package com.bizonrelax.milkromug.config;
 
 import java.awt.Desktop;
 import java.net.URI;
-import java.util.List;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +27,19 @@ public class BrowserAutoOpen implements ApplicationListener<ApplicationReadyEven
 
     private final Environment environment;
 
+    /**
+     * Аргументы командной строки JVM недоступны напрямую из Spring-события,
+     * поэтому проверяем системное свойство no-open (Spring Boot mapToSystemProperties)
+     * и переменную окружения MILKROMUG_NO_OPEN как резервный вариант.
+     */
+    private boolean isNoOpenRequested() {
+        if (Boolean.parseBoolean(System.getProperty("no-open", "false"))) {
+            return true;
+        }
+        String env = System.getenv("MILKROMUG_NO_OPEN");
+        return env != null && !env.isBlank() && !"0".equals(env);
+    }
+
     public BrowserAutoOpen(Environment environment) {
         this.environment = environment;
     }
@@ -39,8 +52,7 @@ public class BrowserAutoOpen implements ApplicationListener<ApplicationReadyEven
             log.info("Автооткрытие браузера пропущено: headless или нет Desktop.Browse.");
             return;
         }
-        if (event.getArgs().containsOption("no-open")
-                || List.of(event.getArgs().getSourceArgs()).contains("--no-open")) {
+        if (isNoOpenRequested()) {
             log.info("Автооткрытие браузера пропущено: передан аргумент --no-open.");
             return;
         }
