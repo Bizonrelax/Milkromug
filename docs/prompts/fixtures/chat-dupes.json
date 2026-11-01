@@ -1,0 +1,20 @@
+{
+  "title": "chat-dupes fixture",
+  "messages": [
+    {
+      "author": "assistant",
+      "html": true,
+      "text": "<div class=\"qwen-message\"><div class=\"message-body\"><p>DUPE-MARKER: один и тот же ответ вложен в три контейнера</p></div></div>"
+    },
+    {
+      "author": "assistant",
+      "html": true,
+      "text": "<div class=\"qwen-message\"><div class=\"message-body\"><p>DUPE-MARKER: один и тот же ответ вложен в три контейнера</p></div></div>"
+    },
+    {
+      "author": "assistant",
+      "html": true,
+      "text": "<div class=\"qwen-message\"><div class=\"message-body\"><p>DUPE-MARKER: один и тот же ответ вложен в три контейнера</p></div></div>"
+    }
+  ]
+}
