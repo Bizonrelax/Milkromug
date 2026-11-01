@@ -111,8 +111,14 @@ class Prompt10Test {
         String preview = mockMvc.perform(get("/preview/" + id))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        assertThat(preview).doesNotContain("google.sn=");
-        assertThat(preview).doesNotContain("<script>");
+        // Отсекаем служебные <script>/<style> страницы-каркаса preview
+        // (идут после </main>), чтобы assert касался только захваченного контента.
+        int contentStart = preview.indexOf("<main");
+        int contentEnd = preview.indexOf("</main>");
+        String content = (contentStart >= 0 && contentEnd > contentStart)
+                ? preview.substring(contentStart, contentEnd) : preview;
+        assertThat(content).doesNotContain("google.sn=");
+        assertThat(content).doesNotContain("<script>");
         assertThat(preview).contains("Полезный ответ про кружку");
     }
 
