@@ -13,7 +13,8 @@
     <!-- highlight.js из webjar внутри jar: работает офлайн, без интернета -->
     <script th:src="@{/webjars/highlightjs/11.11.1/highlight.min.js}"
             src="/webjars/highlightjs/11.11.1/highlight.min.js" defer></script>
-    <script defer>
+    <!-- th:inline="none": Thymeleaf не должен трактовать [[ ... ]] внутри JS как привязку -->
+    <script defer th:inline="none">
         window.addEventListener('DOMContentLoaded', function () {
             if (window.hljs && typeof hljs.highlightAll === 'function') {
                 hljs.highlightAll();
