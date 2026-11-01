@@ -55,6 +55,11 @@ final class PortGuard {
     /**
      * Если порт занят — печатает подсказку и завершает JVM с кодом 0.
      * Если порт свободен — сразу освобождает тестовый сокет и возвращает управление.
+     *
+     * <p>Промпт-13 (Console-wait): в среде с консолью (System.console() != null,
+     * например двойной клик по Milkromug.exe на Windows) после сообщения ждём
+     * нажатие Enter — иначе окно консоли мгновенно закрывается и выглядит как
+     * «нет реакции». В headless-режиме (console == null) ожидания нет, код выхода 0.</p>
      */
     static void ensurePortAvailable(int port) {
         try (ServerSocket probe = new ServerSocket()) {
@@ -63,9 +68,23 @@ final class PortGuard {
             return; // порт свободен — всё в порядке
         } catch (IOException busy) {
             System.out.println(alreadyRunningMessage(port));
+            waitForEnterIfConsole();
             System.out.flush();
             // Код 0: повторный запуск — не ошибка, а штатная ситуация.
             Runtime.getRuntime().halt(0);
+        }
+    }
+
+    /**
+     * Промпт-13: ждать Enter только если есть живая консоль (System.console() != null);
+     * в headless/CI ожидание пропускаем. Вынесено из PortGuard-логики связывания порта —
+     * трогается только печать и ожидание.
+     */
+    static void waitForEnterIfConsole() {
+        if (System.console() != null) {
+            System.out.println("Нажмите Enter для выхода / Press Enter to exit...");
+            System.out.flush();
+            System.console().readLine();
         }
     }
 
