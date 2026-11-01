@@ -17,16 +17,19 @@
     <label for="fontSpinner">Шрифт чата:</label>
     <input type="number" id="fontSpinner" name="fontSpinner"
            min="8" max="24" step="1"
+           title="Размер шрифта печатного чата в пунктах (8–24)"
            th:value="${fontSize}" value="12"/>
     <span class="hint">pt (8–24)</span>
 
     <!-- Спиннер №2: размер шрифта ИНТЕРФЕЙСА: 10..22 px, localStorage -->
     <label for="uiFontSpinner">Шрифт UI:</label>
     <input type="number" id="uiFontSpinner" name="uiFontSpinner"
-           min="10" max="22" step="1" value="16"/>
+           min="10" max="22" step="1" value="16"
+           title="Размер шрифта интерфейса в пикселях (10–22), сохраняется в браузере"/>
     <span class="hint">px (10–22)</span>
 
-    <button type="button" id="savePdfBtn" onclick="window.print()">
+    <button type="button" id="savePdfBtn" onclick="window.print()"
+            title="Открыть печать браузера и сохранить чат в PDF">
         💾 Сохранить в PDF
     </button>
 </header>

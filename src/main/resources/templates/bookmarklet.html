@@ -51,14 +51,15 @@
     <p>
         <a class="capture-button" id="captureLink"
            th:href="${bookmarkletHref}"
-           href="javascript:void(0)">📌 Milkromug Capture</a>
+           href="javascript:void(0)"
+           title="Перетащите эту кнопку на панель закладок браузера — закладка «Milkromug Capture» готова">📌 Milkromug Capture</a>
     </p>
 
     <details>
         <summary>Минифицированная однострочная версия (для копирования)</summary>
         <textarea class="minified-box" id="minifiedCode" readonly
                   th:text="${bookmarkletMinified}"></textarea>
-        <button type="button" onclick="var t=document.getElementById('minifiedCode');t.select();document.execCommand('copy');this.textContent='✓ Скопировано';">Копировать</button>
+        <button type="button" title="Скопировать код букмарклета в буфер обмена" onclick="var t=document.getElementById('minifiedCode');t.select();document.execCommand('copy');this.textContent='✓ Скопировано';">Копировать</button>
     </details>
 
     <h3>Как пользоваться</h3>
