@@ -1,5 +1,7 @@
 package com.bizonrelax.milkromug;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -7,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import com.bizonrelax.milkromug.controller.DesktopShortcutController;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -27,6 +31,18 @@ class Prompt10Test {
 
     @Autowired
     private MockMvc mockMvc;
+
+    // CI runs on windows-latest: make the OS gate deterministic by pinning
+    // the controller's view of the OS to linux for these tests.
+    @BeforeEach
+    void pinLinux() {
+        DesktopShortcutController.osNameOverrideForTests = "linux";
+    }
+
+    @AfterEach
+    void unpinOs() {
+        DesktopShortcutController.osNameOverrideForTests = "";
+    }
 
     /* ---------- Шаг 7: POST /desktop-shortcut ---------- */
 

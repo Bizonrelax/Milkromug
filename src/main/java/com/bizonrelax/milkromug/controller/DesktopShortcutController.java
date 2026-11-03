@@ -27,10 +27,20 @@ public class DesktopShortcutController {
     private static final String TARGET_URL = "http://localhost:8080/bookmarklet";
     private static final String HOTKEY = "CTRL+ALT+M";
 
+    /**
+     * Injectable OS name for tests (package-private seam). Empty = use the
+     * real system property. Tests set "linux" so the OS gate is deterministic
+     * regardless of the CI runner image (GitHub Actions here runs windows-latest).
+     */
+    public static volatile String osNameOverrideForTests = "";
+
     @PostMapping(value = "/desktop-shortcut", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> createShortcut() {
         Map<String, Object> response = new LinkedHashMap<>();
-        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        String override = osNameOverrideForTests;
+        String os = (override != null && !override.isEmpty())
+                ? override.toLowerCase(Locale.ROOT)
+                : System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         // Prompt-16: gate by OS and a real writable Desktop folder - AWT headless
         // has nothing to do with writing a .lnk file (owner field report on Win11).
         if (!os.contains("win")) {
@@ -40,9 +50,13 @@ public class DesktopShortcutController {
                     + " will work after running Milkromug.exe on Windows.");
             return response;
         }
-        Path winDesktop = Path.of(System.getenv().getOrDefault("USERPROFILE",
-                System.getProperty("user.home")), "Desktop");
-        if (!java.nio.file.Files.isDirectory(winDesktop) || !java.nio.file.Files.isWritable(winDesktop)) {
+        // PS5.1 expands $env:USERPROFILE but leaves $HOME unset; fall back to
+        // user.home only when the Desktop folder really exists and is writable.
+        String userProfile = System.getenv("USERPROFILE");
+        Path winDesktop = (userProfile != null && !userProfile.isBlank())
+                ? Path.of(userProfile, "Desktop")
+                : Path.of(System.getProperty("user.home"), "Desktop");
+        if (!Files.isDirectory(winDesktop) || !Files.isWritable(winDesktop)) {
             response.put("ok", false);
             response.put("error", "Windows Desktop folder is not writable: " + winDesktop);
             return response;

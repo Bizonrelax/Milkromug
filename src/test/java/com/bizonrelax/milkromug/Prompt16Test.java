@@ -1,6 +1,9 @@
 package com.bizonrelax.milkromug;
 
 import com.bizonrelax.milkromug.controller.BookmarkletSource;
+import com.bizonrelax.milkromug.controller.DesktopShortcutController;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,6 +35,18 @@ class Prompt16Test {
 
     @Autowired
     private MockMvc mockMvc;
+
+    // CI runs on windows-latest: pin the controller's OS view to linux so the
+    // "only available on Windows" gate is deterministic on any runner image.
+    @BeforeEach
+    void pinLinux() {
+        DesktopShortcutController.osNameOverrideForTests = "linux";
+    }
+
+    @AfterEach
+    void unpinOs() {
+        DesktopShortcutController.osNameOverrideForTests = "";
+    }
 
     /** Сырой href на странице: содержит fetch( и не содержит HTML-сущностей. */
     @Test
