@@ -31,31 +31,39 @@ class Prompt17Http400Test {
 
     /** Собираем payload примерно в 5 МБ: много \n, \r, ", \, unicode-мусор. */
     private static String hugePayload() {
-        StringBuilder chunk = new StringBuilder();
         // Спецсимволы в JSON-строковом виде: \n \r \" \\ и юникод-эскейпы.
-        chunk.append("Привет!\\n\"Кавычки\" и \\\\ слеши \\r\\n ");
-        chunk.append("\\u003Cscript\\u003E <b>html</b> \\t таб `code` # ** ~~ ").append('™');
-        for (int i = 0; i < 60; i++) {
-            chunk.append("слово").append(i).append(' ');
-        }
-        String unit = chunk.toString();
+        String unit = "Привет!\\n\\\"Кавычки\\\" и \\\\ слеши \\r\\n "
+                + "\\u003Cscript\\u003E <b>html</b> \\t таб `code` # ** ~~ ™";
+        int perMessage = 5000;               // ~5k символов текста на сообщение
+        int messages = (5 * 1024 * 1024) / perMessage + 1; // ~5 МБ
+
+        // Сначала собираем «чистый» текст сообщения (уже заполненный, без хвостовых
+        // пробелов), затем экранируем для JSON — так обрезка никогда не рассечёт эскейп.
+        StringBuilder textBuf = new StringBuilder(perMessage + unit.length() + 16);
+        java.util.function.IntFunction<String> rawText = m -> {
+            textBuf.setLength(0);
+            while (textBuf.length() < perMessage + 8) { // запас, чтобы не резать эскейп на границе
+                textBuf.append(unit).append("слово").append(m).append(' ');
+            }
+            textBuf.setLength(perMessage);
+            // Если обрезка всё же рассекла экранированный символ (\X), убираем
+            // висящий обратный слэш — иначе JSON будет битым.
+            int len = textBuf.length();
+            if (len >= 2 && textBuf.charAt(len - 1) == '\\'
+                    && textBuf.charAt(len - 2) != '\\') {
+                textBuf.setLength(len - 1);
+            }
+            return textBuf.toString();
+        };
+
         StringBuilder sb = new StringBuilder(6_000_000);
         sb.append("{\"title\":\"Огромный чат \\u2116 1\",\"messages\":[");
-        int perMessage = 5000;              // ~5k символов на сообщение
-        int messages = unit.isEmpty() ? 0 : (5 * 1024 * 1024) / perMessage + 1; // ~5 МБ
         for (int m = 0; m < messages; m++) {
             if (m > 0) sb.append(',');
             sb.append("{\"author\":\"").append(m % 2 == 0 ? "user" : "assistant")
-              .append("\",\"text\":\"");
-            for (int r = 0; r < perMessage / unit.length() + 1 && sb.length() < 5 * 1024 * 1024 + perMessage; r++) {
-                sb.append(unit);
-            }
-            sb.setLength(Math.min(sb.length(), sb.length())); // no-op, читаемость
-            // обрезаем текст до аккуратной длины сообщения
-            int start = sb.lastIndexOf("\"text\":\"") + "\"text\":\"".length();
-            int targetLen = start + perMessage;
-            if (sb.length() > targetLen) sb.setLength(targetLen);
-            sb.append("\\n\",\"html\":false}");
+              .append("\",\"text\":\"")
+              .append(rawText.apply(m).replace("\\", "\\\\").replace("\"", "\\\""))
+              .append("\\n\",\"html\":false}");
         }
         sb.append("]}");
         return sb.toString();
@@ -66,8 +74,10 @@ class Prompt17Http400Test {
     void hugeJsonWithSpecialCharsReturnsOk() throws Exception {
         String body = hugePayload();
         assertThat(body.length()).isGreaterThan(4 * 1024 * 1024); // гарантируем «огромность»
-        // sanity: сам JSON разборный
-        new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
+        // sanity: сам JSON разборный, строковые значения содержат живые \n и "
+        var tree = new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
+        String firstText = tree.path("messages").get(0).path("text").asText();
+        assertThat(firstText).contains("\n").contains("\"").contains("\\");
 
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,19 +91,19 @@ class Prompt17Http400Test {
     /** Шаг 1: битый JSON -> 400 с понятным текстом, без стектрейса. */
     @Test
     void brokenJsonReturnsFriendly400() throws Exception {
+        String truncated = "{\"title\":\"x\",\"messages\":[{\"author\":\"user\",\"text\":\"обрыв";
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"x\",\"messages\":[{\"author\":\"user\",\"text\":\"обрыв"))
-                .andExpect(status().isBadRequest())
-                // text/plain без charset — браузер/клиент читает как UTF-8
+                        .content(truncated))
+                .andExpect(status().isBadRequest());
+        // text/plain без charset — читаем ответ явно в UTF-8
+        String responseBody = mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(truncated))
                 .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         assertThat(responseBody).contains("повреждённый JSON").contains("Первые 200 символов");
-    }
-
-    /** internal helper placeholder */
-    private static String unused(MockMvc m) {
-        return "";
     }
 
     /** Шаг 1: невалидный символ в JSON -> тоже дружелюбный 400 (не 500 и не стектрейс). */
@@ -114,7 +124,14 @@ class Prompt17Http400Test {
                         java.nio.file.Path.of("src/main/resources/application.properties")),
                 java.nio.charset.StandardCharsets.UTF_8);
         assertThat(props).contains("server.tomcat.max-http-form-post-size=10MB");
-        assertThat(props).contains("spring.jackson.parser.max-string-length=10000000");
+        // буквальный ключ spring.jackson.parser.max-string-length невалиден для
+        // Spring Boot (spring.jackson.parser.* принимает только флаги JsonParser.Feature
+        // и роняет контекст), поэтому лимит задан рабочим способом: property + JacksonConfig
+        assertThat(props).contains("milkromug.jackson.max-string-length=10000000");
+        var configSrc = java.nio.file.Files.readString(
+                java.nio.file.Path.of("src/main/java/com/bizonrelax/milkromug/config/JacksonConfig.java"));
+        assertThat(configSrc).contains("StreamReadConstraints")
+                             .contains("maxStringLength");
     }
 
     /** Шаги 3-4: букмарклет содержит эвристику чередующихся блоков и sanitizeText. */
