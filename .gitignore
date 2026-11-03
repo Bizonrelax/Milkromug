@@ -19,3 +19,13 @@ buildNumber.properties
 # Случайно добавленные артефакты инструментов
 jdk-*/
 jdk21.tar.gz
+
+
+#Ti
+*.class
+  *.jar
+  *.log
+  .idea/
+  *.iml
+  .DS_Store
+  Thumbs.db
