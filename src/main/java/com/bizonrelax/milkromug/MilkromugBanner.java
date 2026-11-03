@@ -29,8 +29,12 @@ public class MilkromugBanner implements Banner {
         printCollectionPanel(out, "Gwen's Mug", "mug-gwen.txt");
         // 4: Gwen's Horse из коллекции docs/ascii-collection
         printCollectionPanel(out, "Gwen's Horse", "horse-gwen.txt");
-        // 5: Gwen's Horse v2 (промпт-16) из коллекции docs/ascii-collection
+        // 5: Gwen's Horse v2 (промпт-16) из коллекции docs/ascii-collection;
+        // после панели допечатываем classpath-копию ресурса: в portable-образе
+        // (jpackage app-image) папки docs рядом с jar нет, а классы баннера
+        // лежат внутри jar — classpath виден всегда. Файл коллекции не трогаем.
         printCollectionPanel(out, "Gwen's Horse v2", "horse-gwen-v2.txt");
+        ResourceBannerSupport.printClasspathBanner("horse-gwen-v2.txt", out);
     }
 
     private void printCollectionPanel(PrintStream out, String title, String fileName) {
