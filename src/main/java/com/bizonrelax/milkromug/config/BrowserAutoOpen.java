@@ -46,10 +46,8 @@ public class BrowserAutoOpen implements ApplicationListener<ApplicationReadyEven
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        if (Boolean.getBoolean("java.awt.headless")
-                || !Desktop.isDesktopSupported()
-                || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            log.info("Browser auto-open skipped: headless or Desktop.Browse is not supported.");
+        if (Boolean.getBoolean("java.awt.headless")) {
+            log.info("Browser auto-open skipped: headless.");
             return;
         }
         if (isNoOpenRequested()) {
@@ -64,9 +62,9 @@ public class BrowserAutoOpen implements ApplicationListener<ApplicationReadyEven
             System.out.println("Browser opened: " + url);
             log.info("Browser opened in default OS browser: {}", url);
         } catch (Exception e) {
+            // Prompt-16: log the ACTUAL exception class and message, no pre-check gate.
             System.out.println("Could not open browser automatically - go to http://localhost:" + port);
-            log.warn("Browser open skipped: could not open browser automatically ({})."
-                    + " Open {} manually.", e.getMessage(), url);
+            log.warn("Browser open failed: {} - {}", e.getClass().getName(), e.getMessage());
         }
     }
 }
