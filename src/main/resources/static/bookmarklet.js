@@ -54,6 +54,20 @@
   } else if (/(\.|^)gemini\.google\.com$/.test(host) || /(^|\.)gemini\.google$/.test(host)) {
     SELECTORS.push('message-content');
     SELECTORS.push('.model-response-text');
+  } else if (/(\.|^)deepseek\.com$/.test(host)) {
+    /* Промпт-17: DeepSeek — реплики лежат в блоках с классами, содержащими
+     * 'message'/'markdown'; точечные селекторы нестабильны, поэтому два
+     * широких кандидата, а при промахе включается эвристика ниже. */
+    SELECTORS.push('[class*="message"]');
+    SELECTORS.push('[class*="markdown"]');
+  } else if (/(^|\.)(gemini|share)\.google(\.com|\.dev)?$/.test(host) || /(^|\.)aistudio\.google\.com$/.test(host)) {
+    /* Промпт-17: семейство Google AI (gemini.google.com, share.google AIMode,
+     * aistudio.google.com) — общие кандидаты поверх старых aimode-селекторов. */
+    SELECTORS.push('message-content');
+    SELECTORS.push('.model-response-text');
+    SELECTORS.push('[data-test-id*="response"]');
+    SELECTORS.push('section.message > div.content');
+    SELECTORS.push('div.content');
   } else if (/share\.google$/.test(host) || /(^|\.)share\.google$/.test(host)) {
     /* Трассировка живой страницы share.google/aimode (промпт-13): реплики
      * диалога лежат в section.message (класс message-user / message-assistant),
@@ -116,6 +130,41 @@
       });
     }
   }
+  /* ---- Эвристика (промпт-17): повторяющиеся текстовые блоки, чередующиеся
+   * «user/assistant» («я/ИИ»). Точечные селекторы DeepSeek/Google AI часто
+   * ломаются после редизайна страницы, поэтому ищем контейнер, у которого не
+   * менее четырёх похожих детей с содержимым более 20 символов. Роли при этом
+   * определяются по классам (user|human|prompt vs assistant|model|answer|bot)
+   * либо простым чередованием в roleOf(). */
+  if (nodes.length === 0) {
+    var bestPair = null;
+    var allEls = document.querySelectorAll('*');
+    for (var q = 0; q < allEls.length; q++) {
+      var cont = allEls[q];
+      var kids = cont.children;
+      if (!kids || kids.length < 4) continue;
+      var like = 0;
+      var chars = 0;
+      var firstSig = '';
+      for (var w = 0; w < kids.length; w++) {
+        var kid = kids[w];
+        var kt = (kid.innerText || '').trim();
+        var sig = kid.tagName + '|' + (kid.getAttribute('class') || '');
+        if (kt.length > 20 && (firstSig === '' || sig === firstSig)) {
+          if (firstSig === '') firstSig = sig;
+          like++;
+          chars += kt.length;
+        }
+      }
+      if (like < 4) continue;
+      if (!bestPair || chars > bestPair.chars) bestPair = { el: cont, chars: chars };
+    }
+    if (bestPair) {
+      nodes = Array.prototype.filter.call(bestPair.el.children, function (x) {
+        return (x.innerText || '').trim().length > 20;
+      });
+    }
+  }
   if (nodes.length === 0) { failHere('Сообщения не найдены'); return; }
   /* ---- роль автора: data-атрибуты, иначе чередование от первого сообщения ---- */
   function roleOf(node, idx) {
@@ -125,6 +174,12 @@
       if (r) return r.toLowerCase() === 'user' ? 'user' : 'assistant';
       el = el.parentElement;
     }
+    /* Промпт-17 (эвристика): если data-атрибутов нет, роль угадываем по
+     * именам классов узла — user/human/prompt/question против
+     * assistant/model/answer/response/bot; иначе чередование. */
+    var cls = (node.className || '').toString().toLowerCase();
+    if (/user|human|prompt|question/.test(cls)) return 'user';
+    if (/assistant|model|answer|response|bot/.test(cls)) return 'assistant';
     return idx % 2 === 0 ? 'user' : 'assistant';
   }
   /* ---- сбор сообщений ---- */
@@ -164,6 +219,26 @@
     if (seg) { title = parts[0].trim(); break; }
   }
   if (!title) title = rawTitle;
+  /* ---- Санитизация (промпт-17): перед fetch прогоняем весь текст через
+   * sanitizeText: CR и управляющие символы вырезаются, переводы строк,
+   * кавычки и обратные слеши заменяются безопасными Unicode-последо-
+   * вательностями (U+2028/U+2029/FULLQUOTE/FULLBACKSLASH), чтобы JSON
+   * гарантированно не порвался в пути. Функция идемпотентна: повторный
+   * прогон уже очищенного текста ничего не меняет. */
+  function sanitizeText(t) {
+    var s = String(t == null ? '' : t);
+    s = s.replace(/\r/g, '');
+    s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+    s = s.replace(/\n/g, String.fromCharCode(0x2028));
+    s = s.replace(/"/g, String.fromCharCode(0xFF22));
+    s = s.replace(/\\/g, String.fromCharCode(0xFF3C));
+    return s;
+  }
+  for (var z = 0; z < messages.length; z++) {
+    messages[z].text = sanitizeText(messages[z].text);
+    messages[z].author = sanitizeText(messages[z].author);
+  }
+  title = sanitizeText(title);
   /* ---- POST на локальный сервер (mixed content для loopback разрешён) ---- */
   fetch(SERVER + '/chat', {
     method: 'POST',
