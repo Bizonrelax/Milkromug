@@ -152,6 +152,7 @@ public class ChatController {
         // Промпт-13: перетаскиваемая кнопка и textarea — это ЛОАДЕР (fetch + eval
         // свежего кода с /bookmarklet.js), закладка переживает обновления программы.
         model.addAttribute("bookmarkletHref", BookmarkletSource.buildLoaderHref());
+        model.addAttribute("loaderBody", BookmarkletSource.buildLoaderBody());
         model.addAttribute("bookmarkletMinified", BookmarkletSource.buildLoaderHref());
         // Аварийный вариант (полный старый однострочник) — в details на странице.
         model.addAttribute("bookmarkletLegacy", BookmarkletSource.buildLegacyOneLiner());

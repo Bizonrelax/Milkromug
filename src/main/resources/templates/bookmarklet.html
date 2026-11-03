@@ -42,7 +42,7 @@
     <nav style="margin-left:auto" class="no-print">
         <a th:href="@{/glossary(lang='ru')}" href="/glossary?lang=ru"
            title="Глоссарий и FAQ для новичков">📖 Глоссарий</a> ·
-        <a th:href="@{/about}" href="/about" title="Об программе">About</a>
+        <a th:href="@{/about}" href="/about" title="О программе">About</a>
     </nav>
 
     <!-- Спиннер №1: размер шрифта ПЕЧАТНОГО чата (на этой странице не используется, но спиннеры обязательны) -->
@@ -77,10 +77,17 @@
 
     <p>
         <a class="capture-button" id="captureLink"
-           th:href="${bookmarkletHref}"
            href="javascript:void(0)"
            title="Перетащите эту кнопку на панель закладок браузера — закладка «Milkromug Capture» готова. Лоадер: всегда свежий код без переустановки">📌 Milkromug Capture (loader)</a>
     </p>
+
+    <!-- Промпт-16: сырой href лоадера без HTML-экранирования (th:block+th:utext),
+         скрипт ниже назначает его в href кнопки и использует для самотеста -->
+    <script type="text/plain" id="loaderHrefRaw"><th:block th:utext="${bookmarkletHref}"></th:block></script>
+
+    <!-- Промпт-16: самотест лоадера прямо на странице: зелёный/красный результат без консоли -->
+    <p><button type="button" id="loader-test" title="Запустить тело лоадера на этой странице">🧪 Самотест лоадера</button>
+       <span id="loader-test-result"></span></p>
 
     <details>
         <summary>Код лоадера (для копирования — вставлять в поле URL закладки)</summary>
@@ -168,6 +175,30 @@
         e.preventDefault();
         alert('Не кликай — ПЕРЕТАЩИ эту кнопку мышью на панель закладок браузера,\n' +
               'а затем открой страницу чата и кликни по закладке.');
+    });
+</script>
+
+<script th:inline="none">
+    // Промпт-16: назначаем href лоадера сырой строкой из data-атрибута —
+    // в исходнике страницы javascript:-нагрузка видна без HTML-экранирования.
+    (function () {
+        var a = document.getElementById('captureLink');
+        var raw = document.getElementById('loaderHrefRaw').textContent.trim();
+        if (raw) a.href = raw;
+    })();
+    // Кнопка самотеста: выполняет ТЕЛО лоадера здесь и показывает результат на странице.
+    document.getElementById('loader-test').addEventListener('click', function () {
+        var res = document.getElementById('loader-test-result');
+        try {
+            var body = document.getElementById('loaderHrefRaw').textContent.trim()
+                .replace(/^javascript:/, '');
+            (new Function(body))();
+            res.textContent = ' ✅ запущено';
+            res.style.color = '#080';
+        } catch (e) {
+            res.textContent = ' ❌ ' + e.message;
+            res.style.color = '#b00';
+        }
     });
 </script>
 </body>

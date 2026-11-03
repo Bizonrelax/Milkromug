@@ -31,8 +31,8 @@ public class DesktopShortcutController {
     public Map<String, Object> createShortcut() {
         Map<String, Object> response = new LinkedHashMap<>();
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-        boolean headless = java.awt.GraphicsEnvironment.isHeadless();
-
+        // Prompt-16: gate by OS and a real writable Desktop folder - AWT headless
+        // has nothing to do with writing a .lnk file (owner field report on Win11).
         if (!os.contains("win")) {
             response.put("ok", false);
             response.put("error", "Desktop shortcut is only available on Windows"
@@ -40,14 +40,14 @@ public class DesktopShortcutController {
                     + " will work after running Milkromug.exe on Windows.");
             return response;
         }
-        if (headless) {
+        Path winDesktop = Path.of(System.getenv().getOrDefault("USERPROFILE",
+                System.getProperty("user.home")), "Desktop");
+        if (!java.nio.file.Files.isDirectory(winDesktop) || !java.nio.file.Files.isWritable(winDesktop)) {
             response.put("ok", false);
-            response.put("error", "Server runs in headless mode - no desktop available."
-                    + " Start Milkromug.exe with a normal double click.");
+            response.put("error", "Windows Desktop folder is not writable: " + winDesktop);
             return response;
         }
-
-        Path desktop = Path.of(System.getProperty("user.home"), "Desktop");
+        Path desktop = winDesktop;
         Path lnk = desktop.resolve(SHORTCUT_NAME);
         // PS1 snippet via WScript.Shell per owner's note: TargetPath/Hotkey set locally.
         String ps = "$ws = New-Object -ComObject WScript.Shell;"

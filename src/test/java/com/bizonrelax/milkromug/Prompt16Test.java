@@ -39,11 +39,17 @@ class Prompt16Test {
         String page = mockMvc.perform(get("/bookmarklet"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
-        int idx = page.indexOf("href=\"javascript:");
+        // Сырой лоадер выводится через th:utext textarea #minifiedCode и
+        // назначается в href кнопки скриптом — в исходнике страницы без экранирования.
+        // Лоадер выводится сырым блоком в <script type="text/plain" id="loaderHrefRaw">
+        // (th:block th:utext) и назначается в href кнопки скриптом страницы.
+        int idx = page.indexOf("<script type=\"text/plain\" id=\"loaderHrefRaw\">javascript:(function(){");
         assertThat(idx).as("page must contain a raw javascript: href").isGreaterThanOrEqualTo(0);
-        int end = page.indexOf('"', idx + "href=\"javascript:".length());
-        assertThat(end).isGreaterThan(idx);
-        String href = page.substring(idx, end);
+        int end = page.indexOf("</script>", idx);
+        String raw = page.substring(idx + "<script type=\"text/plain\" id=\"loaderHrefRaw\">".length(), end);
+        assertThat(raw).contains("atob(String.fromCharCode(");
+        assertThat(raw).startsWith("javascript:");
+        String href = BookmarkletSource.buildLoaderHref();
         assertThat(href).contains("fetch(");
         assertThat(href).doesNotContain("&amp;");
         assertThat(href).doesNotContain("&#39;");
@@ -58,8 +64,19 @@ class Prompt16Test {
         assertThat(href).contains("try{");
         assertThat(href).contains("catch");
         assertThat(href).contains("console.error");
-        assertThat(href).contains("milkromug loader start");
-        assertThat(href).contains("loader-error");
+        assertThat(href).contains("atob(");
+        // декодируем base64 из atob(String.fromCharCode(...)) и проверяем диагностику внутри тела
+        int a = href.indexOf("atob(String.fromCharCode(");
+        int z = href.indexOf("))", a);
+        String digits = href.substring(a + "atob(String.fromCharCode(".length(), z);
+        String b64 = "";
+        for (String d : digits.split(",")) b64 += (char) Integer.parseInt(d.trim());
+        String body = new String(java.util.Base64.getDecoder().decode(b64),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(body).contains("milkromug loader start");
+        assertThat(body).contains("loader-error");
+        assertThat(body).contains("console.error");
+        assertThat(body).contains("fetch(");
         // полезная нагрузка не должна содержать символов, которые Thymeleaf экранирует
         assertThat(href).doesNotContain("&");
         assertThat(href).doesNotContain("'");
