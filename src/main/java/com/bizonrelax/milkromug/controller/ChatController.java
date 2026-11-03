@@ -83,8 +83,25 @@ public class ChatController {
                              Model model) throws Exception {
 
         // Тело всегда JSON, но Content-Type у клиентов бывает text/plain — парсим явно.
-        ChatRequest request = new com.fasterxml.jackson.databind.ObjectMapper()
-                .readValue(rawBody, ChatRequest.class);
+        // Промпт-17: битый/неполный JSON от букмарклета (DeepSeek, Google AI,
+        // длинные чаты) раньше улетал в Whitelabel с стектрейсом. Ловим ошибку
+        // десериализации Jackson, логируем первые 200 символов сырого payload
+        // и отвечаем 400 с понятным текстом ошибки.
+        ChatRequest request;
+        try {
+            request = new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(rawBody, ChatRequest.class);
+        } catch (com.fasterxml.jackson.core.JacksonException e) {
+            String preview = rawBody == null ? "(null)"
+                    : rawBody.substring(0, Math.min(200, rawBody.length()));
+            System.err.println("[Milkromug] POST /chat: некорректный JSON (" + e.getOriginalMessage()
+                    + "), начало payload: " + preview);
+            return org.springframework.http.ResponseEntity.badRequest()
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Milkromug: сервер получил повреждённый JSON и не смог его разобрать. "
+                            + "Причина: " + e.getOriginalMessage()
+                            + ". Первые 200 символов запроса: " + preview);
+        }
 
         boolean wantsHtml = "html".equalsIgnoreCase(legacy) || acceptsHtml(acceptHeader);
 
