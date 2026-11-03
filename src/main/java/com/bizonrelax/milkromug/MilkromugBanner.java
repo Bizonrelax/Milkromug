@@ -29,6 +29,8 @@ public class MilkromugBanner implements Banner {
         printCollectionPanel(out, "Gwen's Mug", "mug-gwen.txt");
         // 4: Gwen's Horse из коллекции docs/ascii-collection
         printCollectionPanel(out, "Gwen's Horse", "horse-gwen.txt");
+        // 5: Gwen's Horse v2 (промпт-16) из коллекции docs/ascii-collection
+        printCollectionPanel(out, "Gwen's Horse v2", "horse-gwen-v2.txt");
     }
 
     private void printCollectionPanel(PrintStream out, String title, String fileName) {
