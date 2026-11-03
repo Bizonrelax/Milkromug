@@ -50,7 +50,16 @@ class Prompt16Test {
         assertThat(raw).contains("atob(String.fromCharCode(");
         assertThat(raw).startsWith("javascript:");
         String href = BookmarkletSource.buildLoaderHref();
-        assertThat(href).contains("fetch(");
+        // полезная нагрузка лоадера лежит в atob(String.fromCharCode(...)) — fetch( ищем в декодированном теле
+        int da = href.indexOf("atob(String.fromCharCode(");
+        int dz = href.indexOf("))", da);
+        StringBuilder b64sb = new StringBuilder();
+        for (String d : href.substring(da + "atob(String.fromCharCode(".length(), dz).split(",")) {
+            b64sb.append((char) Integer.parseInt(d.trim()));
+        }
+        String decodedBody = new String(java.util.Base64.getDecoder().decode(b64sb.toString()),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(decodedBody).contains("fetch(");
         assertThat(href).doesNotContain("&amp;");
         assertThat(href).doesNotContain("&#39;");
         assertThat(href).doesNotContain("&quot;");

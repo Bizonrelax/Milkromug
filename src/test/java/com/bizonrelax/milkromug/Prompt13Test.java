@@ -83,7 +83,9 @@ class Prompt13Test {
             b64 += (char) Integer.parseInt(d.trim());
         }
         String body = new String(java.util.Base64.getDecoder().decode(b64), java.nio.charset.StandardCharsets.UTF_8);
-        assertThat(body).contains("fetch(\"http://localhost:8080/bookmarklet.js?v=");
+        // промпт-16: тело лоадера лежит в base64, кавычки внутри него безопасны — URL сырой
+        assertThat(body).contains("fetch(\"http://localhost:8080/bookmarklet.js?v=\"".replace("\"", "'"));
+        assertThat(body).contains("Date.now()");
     }
 
     /** /bookmarklet.js: Access-Control-Allow-Origin: * и Cache-Control: no-store. */

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Milkromug — чат не найден</title>
+    <link rel="stylesheet" th:href="@{/css/print.css}" href="/css/print.css"/>
+    <!-- Спиннер шрифта интерфейса: применяем до отрисовки, без «прыжка» текста -->
+    <script th:src="@{/js/ui-font.js}" src="/js/ui-font.js" defer></script>
+</head>
+<body>
+<header class="toolbar no-print">
+    <h1 class="brand">☕ Milkromug</h1>
+
+    <!-- Спиннер №1: размер шрифта ПЕЧАТНОГО чата: 8..24 pt -->
+    <label for="fontSpinner">Шрифт чата:</label>
+    <input type="number" id="fontSpinner" name="fontSpinner"
+           min="8" max="24" step="1"
+           th:value="${fontSize}" value="12"/>
+    <span class="hint">pt (8–24)</span>
+
+    <!-- Спиннер №2: размер шрифта ИНТЕРФЕЙСА: 10..22 px, localStorage -->
+    <label for="uiFontSpinner">Шрифт UI:</label>
+    <input type="number" id="uiFontSpinner" name="uiFontSpinner"
+           min="10" max="22" step="1" value="16"/>
+    <span class="hint">px (10–22)</span>
+</header>
+
+<main id="chatPreview" th:style="'font-size:' + ${fontSize} + 'pt;'">
+    <h2 class="chat-title">😔 Чат не найден (404)</h2>
+    <section class="message message-assistant">
+        <div class="content">
+            <p>Чата с идентификатором
+                <code th:text="${missingId}">id</code> нет в памяти Milkromug.</p>
+            <p>Возможные причины:</p>
+            <ul>
+                <li>Milkromug.exe был перезапущен — сохранённые чаты живут только
+                    до перезапуска программы;</li>
+                <li>с момента захвата было сохранено больше 20 чатов, и этот самый
+                    старый вытеснен из памяти;</li>
+                <li>ссылка скопирована с опечаткой.</li>
+            </ul>
+            <p>Просто открой чат заново и кликни по закладке
+                <b>Milkromug Capture</b> ещё раз.</p>
+        </div>
+    </section>
+</main>
+
+<script>
+    const spinner = document.getElementById('fontSpinner');
+    const preview = document.getElementById('chatPreview');
+
+    function applyFont() {
+        let v = parseInt(spinner.value, 10);
+        if (isNaN(v)) v = 12;
+        v = Math.max(8, Math.min(24, v));
+        preview.style.fontSize = v + 'pt';
+    }
+
+    spinner.addEventListener('input', applyFont);
+    applyFont();
+</script>
+</body>
+</html>

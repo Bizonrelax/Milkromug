@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.bizonrelax.milkromug.MilkromugApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.291 s -- in com.bizonrelax.milkromug.MilkromugApplicationTests

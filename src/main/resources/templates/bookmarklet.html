@@ -101,8 +101,9 @@
         <p class="hint">Если сервер недоступен и лоадер не может скачать код —
            используйте этот полный однострочник. Минус: после обновления программы
            такую закладку нужно переустанавливать.</p>
+        <!-- промпт-16, баг 4: textarea — raw-контейнер, utext не экранирует (как minifiedCode) -->
         <textarea class="minified-box" id="legacyCode" readonly
-                  th:text="${bookmarkletLegacy}"></textarea>
+                  th:utext="${bookmarkletLegacy}"></textarea>
         <button type="button" title="Скопировать аварийный однострочник в буфер обмена" onclick="var t=document.getElementById('legacyCode');t.select();document.execCommand('copy');this.textContent='✓ Скопировано';">Копировать</button>
     </details>
 

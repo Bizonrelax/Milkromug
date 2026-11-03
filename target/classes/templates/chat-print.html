@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Milkromug — печать чата</title>
+    <link rel="stylesheet" th:href="@{/css/print.css}" href="/css/print.css"/>
+    <!-- Подсветка синтаксиса: офлайн-тема из webjars внутри jar (без CDN) -->
+    <link rel="stylesheet"
+          th:href="@{/webjars/highlightjs/11.11.1/styles/github.min.css}"
+          href="/webjars/highlightjs/11.11.1/styles/github.min.css"/>
+    <!-- Спиннер шрифта интерфейса: применяем до отрисовки, без «прыжка» текста -->
+    <script th:src="@{/js/ui-font.js}" src="/js/ui-font.js" defer></script>
+    <!-- highlight.js из webjar внутри jar: работает офлайн, без интернета -->
+    <script th:src="@{/webjars/highlightjs/11.11.1/highlight.min.js}"
+            src="/webjars/highlightjs/11.11.1/highlight.min.js" defer></script>
+    <!-- th:inline="none": Thymeleaf не должен трактовать [[ ... ]] внутри JS как привязку -->
+    <script defer th:inline="none">
+        window.addEventListener('DOMContentLoaded', function () {
+            if (window.hljs != null && typeof hljs.highlightAll === 'function') {
+                hljs.highlightAll();
+            }
+        });
+    </script>
+</head>
+<body>
+
+<!-- Панель управления: скрыта при печати (media="print" в CSS) -->
+<header class="toolbar no-print">
+    <h1 class="brand">☕ Milkromug</h1>
+
+    <!-- Спиннер №1: размер шрифта ПЕЧАТНОГО чата: 8..24 pt (?font=N) -->
+    <label for="fontSpinner">Шрифт чата:</label>
+    <input type="number" id="fontSpinner" name="fontSpinner"
+           min="8" max="24" step="1"
+           title="Размер шрифта печатного чата в пунктах (8–24)"
+           th:value="${fontSize}" value="12"/>
+    <span class="hint">pt (8–24)</span>
+
+    <!-- Спиннер №2: размер шрифта ИНТЕРФЕЙСА: 10..22 px, localStorage -->
+    <label for="uiFontSpinner">Шрифт UI:</label>
+    <input type="number" id="uiFontSpinner" name="uiFontSpinner"
+           min="10" max="22" step="1" value="16"
+           title="Размер шрифта интерфейса в пикселях (10–22), сохраняется в браузере"/>
+    <span class="hint">px (10–22)</span>
+
+    <button type="button" id="savePdfBtn" onclick="window.print()"
+            title="Открыть печать браузера и сохранить чат в PDF">
+        💾 Сохранить в PDF
+    </button>
+
+    <!-- Кнопки скачивания в текстовых форматах (промпт-12): скрыты при печати -->
+    <a class="download-btn no-print" th:href="'?format=md'"
+       href="?format=md" title="Скачать чат в формате Markdown (.md)">⬇ Скачать .md</a>
+    <a class="download-btn no-print" th:href="'?format=html'"
+       href="?format=html" title="Скачать автономный HTML-файл (.html), открывается офлайн">⬇ Скачать .html</a>
+    <a class="download-btn no-print" th:href="'?format=txt'"
+       href="?format=txt" title="Скачать простой текст без разметки (.txt)">⬇ Скачать .txt</a>
+    <a class="download-btn no-print" th:href="'?format=json'"
+       href="?format=json" title="Скачать исходный JSON-файл чата (.json)">⬇ Скачать .json</a>
+</header>
+
+<!-- Печатная область -->
+<main id="chatPreview" th:style="'font-size:' + ${fontSize} + 'pt;'">
+    <h2 class="chat-title" th:text="${title}">Название диалога</h2>
+
+    <section class="message" th:each="msg : ${messages}"
+             th:classappend="${msg.author == 'user'} ? 'message-user' : 'message-assistant'">
+        <h3 class="author" th:text="${msg.author}">author</h3>
+        <!-- Отфильтрованный HTML сообщения (jsoup Safelist) -->
+        <div class="content" th:utext="${msg.html}">text</div>
+        <!-- Фолбэк для чистого текста: переносы строк сохраняются через pre-wrap -->
+        <div class="content content-plain" th:unless="${msg.rawHtml}"
+             style="white-space: pre-wrap;" th:text="${msg.html}">text</div>
+    </section>
+
+    <p th:if="${#lists.isEmpty(messages)}" class="placeholder">Сообщений нет.</p>
+</main>
+
+<script>
+    // Мгновенно применяем выбранный размер шрифта к области предпросмотра
+    const spinner = document.getElementById('fontSpinner');
+    const preview = document.getElementById('chatPreview');
+
+    function applyFont() {
+        let v = parseInt(spinner.value, 10);
+        if (isNaN(v)) v = 12;
+        v = Math.max(8, Math.min(24, v));
+        preview.style.fontSize = v + 'pt';
+    }
+
+    spinner.addEventListener('input', applyFont);
+    applyFont();
+</script>
+</body>
+</html>
