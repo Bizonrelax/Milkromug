@@ -1,0 +1,55 @@
+Gwen's failed horse (reads as rhombus), history of attempts, Unlicense, 2026-11-03
+
+Attempt 1 — the "horse" that came out a diamond:
+
+                    /\
+                   /  \
+                  /    \
+                 /      \
+                /        \
+               /          \
+              /            \
+             /              \
+            /                \
+           /                  \
+          /                    \
+         /                      \
+        /                        \
+       /                          \
+      /                            \
+     /                              \
+    /                                \
+   /                                  \
+    \                                /
+     \                              /
+      \                            /
+       \                          /
+        \                        /
+         \                      /
+          \                    /
+           \                  /
+            \                /
+             \              /
+              \            /
+               \          /
+                \        /
+                 \      /
+                  \    /
+                   \  /
+                   \ /
+                    V
+
+Attempt 2 — legs went diagonal, body stayed a lozenge:
+
+                   .----.
+                  /      \
+                 /  o     \
+                |          |
+                 \   ___  /
+                  `-'   '-`
+                 /  /   \  \
+                /__/     \__\
+
+History: Gwen kept drawing the outline symmetric on all four sides, so the
+result reads as a rhombus, not a horse. Kept in the collection as a reminder
+of the failed attempts before horse-gwen-v2 landed. Not added to the banner.

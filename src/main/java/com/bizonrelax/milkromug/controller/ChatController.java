@@ -47,11 +47,45 @@ public class ChatController {
 
     private final ChatStore chatStore;
     private final com.bizonrelax.milkromug.service.ExportService exportService;
+    /** Промпт-18: тот же бин ObjectMapper, что у остального приложения —
+     *  только так в силе остаются StreamReadConstraints из JacksonConfig. */
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    /** Каталог дампа битого payload (по умолчанию java.io.tmpdir). */
+    private final String badPayloadDir;
 
     public ChatController(ChatStore chatStore,
-                          com.bizonrelax.milkromug.service.ExportService exportService) {
+                          com.bizonrelax.milkromug.service.ExportService exportService,
+                          com.fasterxml.jackson.databind.ObjectMapper objectMapper,
+                          @org.springframework.beans.factory.annotation.Value(
+                                  "${milkromug.bad-payload-dir:${java.io.tmpdir}}")
+                                  String badPayloadDir) {
         this.chatStore = chatStore;
         this.exportService = exportService;
+        this.objectMapper = objectMapper;
+        this.badPayloadDir = badPayloadDir;
+    }
+
+    /** Дамп сырого тела запроса в temp-каталог; возвращает абсолютный путь или null. */
+    private String dumpBadPayload(String rawBody) {
+        try {
+            String safe = rawBody == null ? "(null)" : rawBody;
+            final int maxBytes = 512 * 1024;
+            if (safe.length() > maxBytes) {
+                safe = safe.substring(0, maxBytes);
+            }
+            java.nio.file.Path dir = java.nio.file.Path.of(badPayloadDir);
+            java.nio.file.Files.createDirectories(dir);
+            java.nio.file.Path file = dir.resolve("milkromug-bad-payload-"
+                    + System.currentTimeMillis() + ".txt");
+            java.nio.file.Files.writeString(file, safe, java.nio.charset.StandardCharsets.UTF_8);
+            String abs = file.toAbsolutePath().toString();
+            System.err.println("[Milkromug] POST /chat: полный payload сохранён: " + abs);
+            return abs;
+        } catch (Exception io) {
+            System.err.println("[Milkromug] POST /chat: не удалось сохранить payload: "
+                    + io.getMessage());
+            return null;
+        }
     }
 
     /** Safelist для экспорта (тот же, что у предпросмотра). */
@@ -89,18 +123,20 @@ public class ChatController {
         // и отвечаем 400 с понятным текстом ошибки.
         ChatRequest request;
         try {
-            request = new com.fasterxml.jackson.databind.ObjectMapper()
-                    .readValue(rawBody, ChatRequest.class);
+            request = objectMapper.readValue(rawBody, ChatRequest.class);
         } catch (com.fasterxml.jackson.core.JacksonException e) {
             String preview = rawBody == null ? "(null)"
                     : rawBody.substring(0, Math.min(200, rawBody.length()));
             System.err.println("[Milkromug] POST /chat: некорректный JSON (" + e.getOriginalMessage()
                     + "), начало payload: " + preview);
+            String dumpPath = dumpBadPayload(rawBody);
             return org.springframework.http.ResponseEntity.badRequest()
                     .contentType(MediaType.TEXT_PLAIN)
                     .body("Milkromug: сервер получил повреждённый JSON и не смог его разобрать. "
                             + "Причина: " + e.getOriginalMessage()
-                            + ". Первые 200 символов запроса: " + preview);
+                            + ". Первые 200 символов запроса: " + preview
+                            + (dumpPath != null
+                                    ? ". Файл с полным payload: " + dumpPath : ""));
         }
 
         boolean wantsHtml = "html".equalsIgnoreCase(legacy) || acceptsHtml(acceptHeader);

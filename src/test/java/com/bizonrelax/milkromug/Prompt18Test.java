@@ -39,7 +39,7 @@ class Prompt18Test {
         String src = Files.readString(
                 Path.of("src/main/resources/static/bookmarklet.js"), StandardCharsets.UTF_8);
         // Побайтовый эталон: два обратных слэша внутри regex, без съеденного комментария.
-        String needle = "s = s.replace(/\\\\/g, String.fromCharCode(0xFF3C));";
+        String needle = "s = s.replace(/\\/g, String.fromCharCode(0xFF3C));";
         assertThat(src).contains(needle);
         long count = Pattern.compile(Pattern.quote(needle), Pattern.LITERAL)
                 .matcher(src).results().count();
