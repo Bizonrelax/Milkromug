@@ -247,7 +247,7 @@
   }).then(function (resp) {
     var ctype = (resp.headers.get('content-type') || '').toLowerCase();
     return resp.text().then(function (text) {
-      if (!resp.ok) { throw new Error('HTTP ' + resp.status + ' от сервера'); }
+      if (!resp.ok) { var e = new Error('HTTP ' + resp.status + ' от сервера'); e.raw = text; throw e; }
       if (ctype.indexOf('json') < 0) { var e = new Error('Сервер ответил не JSON (' + (ctype || 'без content-type') + ')'); e.raw = text; throw e; }
       try { return JSON.parse(text); } catch (e2) { var e3 = new Error('Не удалось разборать ответ сервера как JSON'); e3.raw = text; throw e3; }
     });
