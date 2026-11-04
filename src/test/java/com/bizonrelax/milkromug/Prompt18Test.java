@@ -38,10 +38,12 @@ class Prompt18Test {
     void sanitizeTextBackslashLineIsByteExact() throws Exception {
         String src = Files.readString(
                 Path.of("src/main/resources/static/bookmarklet.js"), StandardCharsets.UTF_8);
-        // Побайтовый эталон: два обратных слэша внутри regex, без съеденного комментария.
-        String needle = "s = s.replace(/\\/g, String.fromCharCode(0xFF3C));";
+        // Побайтовый эталон: ДВА обратных слэша внутри regex (JS-литерал /\\/g),
+        // без съеденного комментария. В Java-исходнике это 4 символа backslash.
+        String b = "\\"; // один символ backslash
+        String needle = "s = s.replace(/" + b + b + "/g, String.fromCharCode(0xFF3C));";
         assertThat(src).contains(needle);
-        long count = Pattern.compile(Pattern.quote(needle), Pattern.LITERAL)
+        long count = Pattern.compile(Pattern.quote(needle))
                 .matcher(src).results().count();
         assertThat(count).isEqualTo(1);
     }
